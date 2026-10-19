@@ -20,7 +20,8 @@ Teclas: números `1`–`9` eligen opciones, `Intro` continúa, `Esc` sale, `F11`
 | Colores y tipografía | variables al principio de `app/estilos.css` (marca: naranja `#FC6B12`, dorado `#F8BC08`; fuente Outfit incluida en `app/assets/fuentes`) |
 | Logos de Ser Humano | `app/assets/img/csh_*.png` (se generan desde `../docs/` con `../herramientas/preparar_imagenes.js`) |
 | Puntuaciones, escenas, orden del viaje | `app/juego.js` |
-| Imágenes / sonidos | `app/assets/img`, `app/assets/snd` |
+| Fotografías | `app/assets/fotos` (Unsplash, ver [CREDITOS.md](CREDITOS.md)). Para cambiarlas: editar `../herramientas/fotos.json`, ejecutar `buscar_fotos.js` (necesita `herramientas/claves.json` con la clave de Unsplash) y elegir en `integrar_fotos.js` |
+| Sonidos | `app/assets/snd` |
 | Ícono del programa | `app/assets/icono.ico` |
 
 > `app/textos.js` se generó con `../herramientas/generar_textos.js`. Si lo editas a mano, no vuelvas a ejecutar ese script o perderás los cambios.
@@ -42,7 +43,7 @@ El resultado queda en `dist/TeamWork-win32-x64/`. Para distribuirlo hay que copi
 
 ## Cambios respecto al original
 
-- Interfaz nueva (pantalla adaptable, alta resolución) con las ilustraciones y sonidos originales.
+- Interfaz nueva (pantalla adaptable, alta resolución) con fotografías nuevas de Unsplash y los sonidos originales.
 - Solo español; los textos en italiano y alemán siguen en `../extraido/recursos/TESTIITA` y `TESTIDE`.
 - Corregidos dos errores del original: elegir *Felicidad* como primer objetivo no sumaba puntos, y la 3.ª opción de *La isla* aplicaba la puntuación de la 1.ª.
 - Corregidas erratas de la traducción española (lista en `../herramientas/generar_textos.js`).

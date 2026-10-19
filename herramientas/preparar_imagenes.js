@@ -7,7 +7,10 @@ const path = require('path');
 const zlib = require('zlib');
 
 const SRC = path.join(__dirname, '..', 'extraido', 'recursos');
-const DST = path.join(__dirname, '..', 'remake', 'app', 'assets', 'img');
+// Las imágenes del juego original ya no se usan en el remake (se sustituyeron por fotos):
+// se guardan como referencia en extraido/. Los logos de la marca sí van al juego.
+const DST = path.join(__dirname, '..', 'extraido', 'imagenes_originales');
+const DST_LOGOS = path.join(__dirname, '..', 'remake', 'app', 'assets', 'img');
 fs.mkdirSync(DST, { recursive: true });
 
 function readPNG(f) {
@@ -172,14 +175,14 @@ for (const [dst, src, modo] of L) {
   const naranja = readPNG(path.join(DOCS, 'clinica.png'));
   const blanco = readPNG(path.join(DOCS, 'clinica2.png'));
   const caja = bbox(naranja);
-  writePNG(path.join(DST, 'csh_logo_naranja.png'), crop(naranja, caja));
-  writePNG(path.join(DST, 'csh_logo_blanco.png'), crop(blanco, caja));
+  writePNG(path.join(DST_LOGOS, 'csh_logo_naranja.png'), crop(naranja, caja));
+  writePNG(path.join(DST_LOGOS, 'csh_logo_blanco.png'), crop(blanco, caja));
   // el símbolo es el bloque de la izquierda, antes del texto "Ser humano"
   const izq = crop(naranja, [0, 0, Math.round(naranja.w * 0.34), naranja.h]);
   const simbolo = crop(izq, bbox(izq));
-  writePNG(path.join(DST, 'csh_simbolo_naranja.png'), simbolo);
+  writePNG(path.join(DST_LOGOS, 'csh_simbolo_naranja.png'), simbolo);
   const izqB = crop(blanco, [0, 0, Math.round(blanco.w * 0.34), blanco.h]);
-  writePNG(path.join(DST, 'csh_simbolo_blanco.png'), crop(izqB, bbox(izqB)));
+  writePNG(path.join(DST_LOGOS, 'csh_simbolo_blanco.png'), crop(izqB, bbox(izqB)));
   console.log('logos CSH:', caja.join(','), 'símbolo:', simbolo.w + 'x' + simbolo.h);
 }
 console.log('imágenes preparadas:', L.length);

@@ -26,7 +26,9 @@ function s(tag, attrs = {}, ...hijos) {
   for (const c of hijos.flat()) if (c != null) el.append(c);
   return el;
 }
-const imagen = (nombre, alt = '', clase) => h('img', { src: `assets/img/${nombre}.png`, alt, class: clase, draggable: 'false' });
+// Fotos (assets/fotos/*.jpg, ver CREDITOS.md) o gráficos de la marca (assets/img/csh_*.png)
+const rutaImagen = (n) => (n.startsWith('csh_') ? `assets/img/${n}.png` : `assets/fotos/${n}.jpg`);
+const imagen = (nombre, alt = '', clase) => h('img', { src: rutaImagen(nombre), alt, class: clase, draggable: 'false' });
 const t = (k) => (k in T ? T[k] : k);
 const linea = (txt) => txt.replace(/\s*\n\s*/g, ' ');
 const capital = (txt) => txt.charAt(0).toUpperCase() + txt.slice(1);
@@ -141,11 +143,11 @@ function actualizarBarra(id) {
 }
 
 // ============================================================ Piezas de interfaz
-function ventana(nombre, { clara = false, cubrir = false, pie = null } = {}) {
+function ventana(nombre, { clara = false, cubrir = true, pie = null } = {}) {
   const im = imagen(nombre, '', cubrir ? 'cubrir' : null);
   const v = h('div', { class: 'ventana' + (clara ? ' clara' : '') }, im, pie && h('div', { class: 'pie-imagen' }, pie));
-  v.cambiar = (n) => { if (n) im.src = `assets/img/${n}.png`; };
-  v.restaurar = () => { im.src = `assets/img/${nombre}.png`; };
+  v.cambiar = (n) => { if (n) im.src = rutaImagen(n); };
+  v.restaurar = () => { im.src = rutaImagen(nombre); };
   v.img = im;
   return v;
 }
@@ -263,7 +265,8 @@ ESCENAS.portada = () => {
       h('button', { class: 'boton', type: 'button', onclick: nuevo }, 'Nuevo viaje', flecha()),
       puedeSeguir && h('button', { class: 'boton secundario', type: 'button', onclick: seguir }, 'Continuar el viaje guardado'),
       h('button', { class: 'boton secundario', type: 'button', onclick: salirApp }, 'Salir')),
-    h('p', { class: 'creditos' }, 'Versión remasterizada del juego TeamWork (1998)')));
+    h('p', { class: 'creditos' }, 'Versión remasterizada del juego TeamWork (1998) · ',
+      h('button', { class: 'enlace', type: 'button', onclick: abrirCreditos }, 'Créditos'))));
   teclas = { Enter: puedeSeguir ? seguir : nuevo };
 };
 
@@ -294,13 +297,13 @@ ESCENAS.intro = (paso = 1) => {
 
 // ============================================================ Prima: ¿qué buscamos en el viaje?
 const MOTIVOS = [
-  { clave: 'Fortuna', texto: 'Prima-2', anim: 'prima_fortuna', cuadros: 6 },
-  { clave: 'Novità', texto: 'Prima-3', anim: 'prima_novedad', cuadros: 3 },
-  { clave: 'Avventura', texto: 'Prima-4', anim: 'prima_aventura', cuadros: 2 },
-  { clave: 'Giustizia', texto: 'Prima-5', anim: 'prima_justicia', cuadros: 5 },
-  { clave: 'Un Ideale', texto: 'Prima-6', anim: 'prima_ideal', cuadros: 4 },
-  { clave: 'Felicità', texto: 'Prima-7', anim: 'prima_felicidad', cuadros: 5 },
-  { clave: 'Cambiare vita', texto: 'Prima-8', anim: 'prima_cambiar', cuadros: 12 },
+  { clave: 'Fortuna', texto: 'Prima-2', foto: 'prima_fortuna' },
+  { clave: 'Novità', texto: 'Prima-3', foto: 'prima_novedad' },
+  { clave: 'Avventura', texto: 'Prima-4', foto: 'prima_aventura' },
+  { clave: 'Giustizia', texto: 'Prima-5', foto: 'prima_justicia' },
+  { clave: 'Un Ideale', texto: 'Prima-6', foto: 'prima_ideal' },
+  { clave: 'Felicità', texto: 'Prima-7', foto: 'prima_felicidad' },
+  { clave: 'Cambiare vita', texto: 'Prima-8', foto: 'prima_cambiar' },
 ];
 // PrimaCal 8: puntos según la 1.ª y la 2.ª elección (la 3.ª no puntúa).
 // Nota: en el original "Felicidad" como 1.ª elección no sumaba por una errata ("Felicità'"); aquí sí suma.
@@ -327,20 +330,7 @@ ESCENAS.prima = () => {
   const reiniciar = h('button', { class: 'boton secundario', type: 'button', disabled: true, onclick: () => { Sonido.click(); ir('prima'); } }, 'Volver a elegir');
 
   const tarjetas = MOTIVOS.map((m, i) => {
-    const im = imagen(`${m.anim}_1`);
-    let anim = null, cuadro = 1, paso = 1;
-    const animar = () => {
-      if (anim) return;
-      anim = cada(() => {
-        if (cuadro + paso > m.cuadros || cuadro + paso < 1) paso = -paso;
-        cuadro += paso;
-        im.src = `assets/img/${m.anim}_${cuadro}.png`;
-      }, 110);
-    };
-    const parar = () => { if (anim) { clearInterval(anim); temporizadores.delete(anim); anim = null; } };
-    const b = h('button', { class: 'motivo', type: 'button' }, h('div', { class: 'anim' }, im), h('div', { class: 'nombre' }, capital(t(m.texto))));
-    b.addEventListener('mouseenter', animar); b.addEventListener('focus', animar);
-    b.addEventListener('mouseleave', parar); b.addEventListener('blur', parar);
+    const b = h('button', { class: 'motivo', type: 'button' }, h('div', { class: 'foto' }, imagen(m.foto)), h('div', { class: 'nombre' }, capital(t(m.texto))));
     const elegir = () => {
       if (b.disabled || elegidos.length >= 3) return;
       Sonido.click();
@@ -349,7 +339,7 @@ ESCENAS.prima = () => {
       b.classList.add('elegido');
       const hu = huecos[elegidos.length - 1];
       hu.classList.add('lleno');
-      hu.replaceChildren(h('b', null, elegidos.length + 'º'), imagen(`${m.anim}_1`), h('span', null, capital(t(m.texto))));
+      hu.replaceChildren(h('b', null, elegidos.length + 'º'), imagen(m.foto), h('span', null, capital(t(m.texto))));
       reiniciar.disabled = false;
       if (elegidos.length === 3) {
         tarjetas.forEach((x) => { x.disabled = true; });
@@ -535,7 +525,7 @@ ESCENAS.bodega = () => {
     etiqueta: 'Preparación · La bodega',
     pregunta: `${t('Cambusa1-1')} ${t('Cambusa1-2')}`,
     nota: rango === 0 ? 'Elige primero el valor que más importa al equipo.' : 'Ahora, el siguiente en importancia.',
-    img: 'bodega_mucha', vent: { clara: true }, conPizarra: true,
+    img: 'eleccion_provisiones', conPizarra: true,
     opciones: quedan.map((k) => ({
       texto: t(VALORES[k].nombre), detalle: t(VALORES[k].desc),
       elegir: () => { S.luf[k] = rango + 1; ir('bodegaNivel', k); },
@@ -578,7 +568,7 @@ ESCENAS.bodegaExceso = () => {
   Sonido.tocar('drop');
   relato({
     etiqueta: 'Preparación · La bodega', titulo: t('Cambusa6-1'), texto: `${t('Cambusa6-2')}\n\n${t('Cambusa6-3')}`,
-    img: 'bodega_mucha', vent: { clara: true },
+    img: 'bodega_mucha',
     botones: [
       { texto: t('Cambusa6-5'), accion: () => { completarBodega(); ir('eleccion'); } },
       { texto: t('Cambusa6-4'), accion: () => { Object.assign(S, S.respaldo); S.luf = {}; S.lufNivel = {}; ir('bodega'); } },
@@ -607,7 +597,7 @@ ESCENAS.tripulacion = () => {
 ESCENAS.grupo = () => {
   const op = (k, ef) => ({ texto: t(k), elegir: () => { sumar(ef); anotar('El grupo', t(k)); ir('decisiones'); } });
   decision({
-    etiqueta: 'Preparación · La tripulación', pregunta: t('Equipe3-1'), img: 'eleccion_tripulacion', vent: { clara: true },
+    etiqueta: 'Preparación · La tripulación', pregunta: t('Equipe3-1'), img: 'eleccion_tripulacion',
     opciones: [op('Equipe3-2', { effi: 3 }), op('Equipe3-3', { effi: 3, crea: 2 }), op('Equipe3-4', { idea: 2 })],
   });
 };
@@ -740,7 +730,7 @@ ESCENAS.reintentar = () => {
 ESCENAS.botadura = () => {
   Sonido.tocar('pan21');
   const [felicidades, ...resto] = t('Scelta2-1').split('\n');
-  const v = ventana('botella_1', { clara: true });
+  const v = ventana('botella');
   const campo = h('input', { id: 'nombre-barco', type: 'text', maxlength: '40', autocomplete: 'off', placeholder: 'Nombre del barco', value: S.nombre });
   const botar = h('button', { class: 'boton', type: 'button', disabled: !S.nombre || null }, '¡Botar el barco!', flecha());
   campo.addEventListener('input', () => { botar.disabled = !campo.value.trim(); });
@@ -750,9 +740,7 @@ ESCENAS.botadura = () => {
     campo.disabled = true;
     S.nombre = campo.value.trim();
     Sonido.tocar('crasha2');
-    let cuadro = 1;
-    v.img.classList.add('choque');
-    cada(() => { if (cuadro < 6) v.cambiar(`botella_${++cuadro}`); }, 110);
+    v.classList.add('brindis');
     luego(() => {
       // SceltaCal 1: puntos según el orden en que se prepararon barco, ruta, tripulación y bodega
       const [p1, p2] = S.lScelta;
@@ -810,7 +798,7 @@ const EVENTOS = {
     despues: () => (S.random === 1 ? alFinal() : ir('evento', 'saturacion')),
   },
   piratas: {
-    titulo: 'Una propuesta tentadora', img: 'ev_pirati', vent: { clara: true }, snd: 'pan8', intro: 'Pirati1-1',
+    titulo: 'Una propuesta tentadora', img: 'ev_pirati', snd: 'pan8', intro: 'Pirati1-1',
     opciones: () => [['Pirati2-1', { effi: 2 }], ['Pirati2-2', { idea: 1 }], ['Pirati2-3', { effi: 2, crea: 2, idea: -1 }]],
     despues: () => (S.random === 2 ? alFinal() : ir('evento', 'naufragos')),
   },
@@ -919,7 +907,8 @@ ESCENAS.despedida = () => {
     h('div', { class: 'botonera' },
       h('button', { class: 'boton', type: 'button', onclick: otraVez }, 'Jugar otra vez', flecha()),
       h('button', { class: 'boton secundario', type: 'button', onclick: imprimirDiario }, BARRA.imprimir),
-      h('button', { class: 'boton secundario', type: 'button', onclick: () => { Sonido.click(); ir('portada'); } }, 'Volver al inicio'))));
+      h('button', { class: 'boton secundario', type: 'button', onclick: () => { Sonido.click(); ir('portada'); } }, 'Volver al inicio'),
+      h('button', { class: 'boton secundario', type: 'button', onclick: abrirCreditos }, 'Créditos'))));
 };
 
 // ============================================================ Ventanas: situación, salir, diario
@@ -966,6 +955,21 @@ function abrirSituacion() {
       dato(BARRA.recorrido, `${recorrido} %`, recorrido),
       h('p', { class: 'nota' }, tiempoJugado() + '.')),
     h('div', { class: 'botonera' }, h('button', { class: 'boton', type: 'button', onclick: cerrarModal }, 'Seguir navegando')),
+  ]);
+}
+
+function abrirCreditos() {
+  Sonido.click();
+  const autores = [...new Set(CREDITOS_FOTOS.map((c) => c.autor))].sort((a, b) => a.localeCompare(b, 'es'));
+  abrirModal([
+    h('h2', null, 'Créditos'),
+    h('div', { class: 'creditos-lista' },
+      h('p', null, h('strong', null, `${MARCA.producto} · ${MARCA.nombre}`)),
+      h('p', { class: 'nota' }, 'Basado en el juego TeamWork (1998), de Claps Soc. Coop. (Pordenone, Italia).'),
+      h('p', null, h('strong', null, 'Fotografías de Unsplash')),
+      h('p', { class: 'nota' }, autores.join(' · ')),
+      h('p', { class: 'nota' }, 'Fuente Outfit (SIL Open Font License).')),
+    h('div', { class: 'botonera' }, h('button', { class: 'boton', type: 'button', onclick: cerrarModal }, 'Cerrar')),
   ]);
 }
 

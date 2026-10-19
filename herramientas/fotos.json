@@ -1,0 +1,59 @@
+{
+  "_nota": "Imagen del juego -> búsqueda en el banco de fotos. 'orientacion': landscape | portrait | squarish. 'elegida' se rellena al escoger la foto.",
+  "fotos": [
+    { "id": "barco_grande", "busqueda": "tall ship sails ocean", "orientacion": "landscape" },
+    { "id": "eleccion_ruta", "busqueda": "nautical chart compass", "orientacion": "landscape" },
+
+    { "id": "prima_fortuna", "busqueda": "gold coins", "orientacion": "squarish" },
+    { "id": "prima_novedad", "busqueda": "lightbulb new idea", "orientacion": "squarish" },
+    { "id": "prima_aventura", "busqueda": "hiker adventure", "orientacion": "squarish" },
+    { "id": "prima_justicia", "busqueda": "scales of justice", "orientacion": "squarish" },
+    { "id": "prima_ideal", "busqueda": "dreamer looking at sky", "orientacion": "squarish" },
+    { "id": "prima_felicidad", "busqueda": "happy people laughing", "orientacion": "squarish" },
+    { "id": "prima_cambiar", "busqueda": "new beginning road ahead", "orientacion": "squarish" },
+
+    { "id": "eleccion_barco", "busqueda": "sailboat", "orientacion": "squarish" },
+    { "id": "eleccion_provisiones", "busqueda": "wooden crates supplies", "orientacion": "squarish" },
+    { "id": "eleccion_tripulacion", "busqueda": "sailing crew teamwork", "orientacion": "squarish" },
+
+    { "id": "barco_1", "busqueda": "small sailboat dinghy", "orientacion": "landscape" },
+    { "id": "barco_2", "busqueda": "cabin sailboat yacht", "orientacion": "landscape" },
+    { "id": "barco_3", "busqueda": "ocean sailing yacht open sea", "orientacion": "landscape" },
+    { "id": "barco_4", "busqueda": "wooden boat craftsmanship", "orientacion": "landscape" },
+
+    { "id": "ruta_1", "busqueda": "sailboat near coastline", "orientacion": "landscape" },
+    { "id": "ruta_2", "busqueda": "sailboat offshore waves", "orientacion": "landscape" },
+    { "id": "ruta_3", "busqueda": "open ocean horizon", "orientacion": "landscape" },
+    { "id": "ruta_4", "busqueda": "sunrise sea horizon unknown", "orientacion": "landscape" },
+
+    { "id": "bodega_poca", "busqueda": "single wooden crate", "orientacion": "squarish" },
+    { "id": "bodega_media", "busqueda": "stacked wooden boxes", "orientacion": "squarish" },
+    { "id": "bodega_mucha", "busqueda": "warehouse full of crates", "orientacion": "squarish" },
+
+    { "id": "tripulacion_1", "busqueda": "wolves in snow", "orientacion": "landscape" },
+    { "id": "tripulacion_2", "busqueda": "group of friends", "orientacion": "squarish" },
+    { "id": "tripulacion_3", "busqueda": "family together", "orientacion": "squarish" },
+    { "id": "tripulacion_4", "busqueda": "soldiers marching", "orientacion": "squarish" },
+    { "id": "tripulacion_5", "busqueda": "rowing team", "orientacion": "squarish" },
+
+    { "id": "lider_reunion", "busqueda": "team meeting discussion", "orientacion": "landscape" },
+    { "id": "lider_circulo", "busqueda": "orchestra conductor", "orientacion": "landscape" },
+    { "id": "decide_todos", "busqueda": "team hands together", "orientacion": "landscape" },
+    { "id": "decide_uno", "busqueda": "leader speaking to team", "orientacion": "landscape" },
+    { "id": "decide_grupo", "busqueda": "board meeting", "orientacion": "landscape" },
+    { "id": "decide_cada", "busqueda": "people working at desks office", "orientacion": "landscape" },
+    { "id": "decide_niveles", "busqueda": "staircase levels", "orientacion": "landscape" },
+
+    { "id": "botella", "busqueda": "champagne bottle celebration", "orientacion": "portrait" },
+    { "id": "grafico", "busqueda": "declining business chart", "orientacion": "landscape" },
+
+    { "id": "ev_affoll", "busqueda": "crowded harbor sailboats", "orientacion": "landscape" },
+    { "id": "ev_tempor", "busqueda": "storm ocean waves dark", "orientacion": "landscape" },
+    { "id": "ev_pirati", "busqueda": "pirate flag", "orientacion": "landscape" },
+    { "id": "ev_naufra", "busqueda": "life raft ocean", "orientacion": "landscape" },
+    { "id": "ev_conc3", "busqueda": "cruise ship port", "orientacion": "landscape" },
+    { "id": "ev_isola", "busqueda": "small tropical island", "orientacion": "landscape" },
+    { "id": "ev_confus", "busqueda": "people arguing frustrated", "orientacion": "landscape" },
+    { "id": "ev_crisi", "busqueda": "abandoned boat beach", "orientacion": "landscape" }
+  ]
+}

@@ -47,6 +47,7 @@ const PASOS = [
   ['despedida', 'TW.ir("despedida")'],
   ['situacion', 'TW.ir("eleccion"); TW.abrirSituacion()', 1500],
   ['salir', 'TW.cerrarModal(); TW.abrirSalir()'],
+  ['creditos', 'TW.cerrarModal(); TW.ir("portada"); document.querySelector(".enlace").click()'],
 ];
 
 app.whenReady().then(async () => {

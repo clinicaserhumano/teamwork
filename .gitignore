@@ -8,3 +8,6 @@ backup_original/
 
 # Binario de terceros: descargar de https://github.com/ProjectorRays/ProjectorRays/releases
 herramientas/projectorrays.exe
+
+# Claves de APIs de fotos (privadas)
+herramientas/claves.json

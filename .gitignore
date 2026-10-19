@@ -1,0 +1,10 @@
+# Dependencias y compilados (se regeneran con npm install / npm run empaquetar)
+node_modules/
+remake/dist/
+
+# Recursos extraídos del juego original (se regeneran con herramientas/)
+extraido/
+backup_original/
+
+# Binario de terceros: descargar de https://github.com/ProjectorRays/ProjectorRays/releases
+herramientas/projectorrays.exe

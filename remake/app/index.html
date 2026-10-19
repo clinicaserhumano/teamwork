@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; media-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>TeamWork · Clínica Ser Humano</title>
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+  <div class="fondo" aria-hidden="true">
+    <svg class="olas" viewBox="0 0 1440 220" preserveAspectRatio="none">
+      <path class="ola ola-1" d="M0 120 C 240 80 480 160 720 120 S 1200 80 1440 120 V220 H0Z"/>
+      <path class="ola ola-2" d="M0 150 C 260 120 520 190 780 150 S 1240 120 1440 150 V220 H0Z"/>
+      <path class="ola ola-3" d="M0 180 C 300 160 600 210 900 180 S 1300 160 1440 180 V220 H0Z"/>
+    </svg>
+  </div>
+
+  <header class="barra" id="barra" hidden>
+    <div class="marca">
+      <img src="assets/img/logo_barca.png" alt="">
+      <div class="marca-texto"><strong>TeamWork</strong><span id="marca-nombre"></span></div>
+    </div>
+    <ol class="etapas" id="etapas" aria-label="Etapas del viaje"></ol>
+    <div class="acciones">
+      <button class="icono" id="btn-situacion" type="button" aria-label="¿En qué punto estamos?" title="¿En qué punto estamos?">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2 5-5 2 2-5z"/></svg>
+      </button>
+      <button class="icono" id="btn-sonido" type="button" aria-label="Sonido" title="Sonido">
+        <svg viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="onda" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/><path class="mute" d="M16 9l5 6M21 9l-5 6"/></svg>
+      </button>
+      <button class="icono" id="btn-pantalla" type="button" aria-label="Pantalla completa (F11)" title="Pantalla completa (F11)">
+        <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+      <button class="icono" id="btn-salir" type="button" aria-label="Salir" title="Salir">
+        <svg viewBox="0 0 24 24"><path d="M14 4h5v16h-5M10 8l-4 4 4 4M6 12h10"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main id="escena" class="escena" tabindex="-1"></main>
+
+  <div id="modal" class="modal" hidden></div>
+  <div id="aviso" class="aviso" role="status" aria-live="polite"></div>
+  <section id="diario" class="diario" aria-hidden="true"></section>
+
+  <script src="textos.js"></script>
+  <script src="juego.js"></script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+  "name": "teamwork-clinica-ser-humano",
+  "productName": "TeamWork - Clinica Ser Humano",
+  "version": "2.0.0",
+  "description": "TeamWork: juego sobre trabajo en equipo (versión remasterizada)",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "probar": "electron pruebas/partidas.js 20",
+    "capturas": "electron pruebas/capturas.js",
+    "empaquetar": "electron-packager . TeamWork --platform=win32 --arch=x64 --out=dist --overwrite --icon=app/assets/icono.ico --ignore=\"^/(dist|pruebas)\" --app-copyright=\"Clinica Ser Humano\" --win32metadata.CompanyName=\"Clinica Ser Humano\" --win32metadata.ProductName=\"TeamWork\" --win32metadata.FileDescription=\"TeamWork - Clinica Ser Humano\""
+  },
+  "devDependencies": {
+    "@electron/packager": "^18.4.4",
+    "electron": "^33.4.11"
+  }
+}

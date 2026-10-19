@@ -19,8 +19,23 @@ function readPNG(f) {
     if (t === 'IDAT') idat.push(d);
     o += 12 + len;
   }
-  const raw = zlib.inflateSync(Buffer.concat(idat)), px = Buffer.alloc(w * h * 4);
-  for (let y = 0; y < h; y++) raw.copy(px, y * w * 4, y * (w * 4 + 1) + 1, (y + 1) * (w * 4 + 1));
+  // RGBA de 8 bits con cualquier filtro de fila (los logos vienen de otros programas)
+  const raw = zlib.inflateSync(Buffer.concat(idat)), st = w * 4, px = Buffer.alloc(w * h * 4);
+  let prev = Buffer.alloc(st);
+  for (let y = 0; y < h; y++) {
+    const f = raw[y * (st + 1)], line = Buffer.from(raw.subarray(y * (st + 1) + 1, (y + 1) * (st + 1)));
+    for (let x = 0; x < st; x++) {
+      const a = x >= 4 ? line[x - 4] : 0, b2 = prev[x], c = x >= 4 ? prev[x - 4] : 0;
+      let v = line[x];
+      if (f === 1) v += a;
+      else if (f === 2) v += b2;
+      else if (f === 3) v += (a + b2) >> 1;
+      else if (f === 4) { const p = a + b2 - c, pa = Math.abs(p - a), pb = Math.abs(p - b2), pc = Math.abs(p - c); v += pa <= pb && pa <= pc ? a : pb <= pc ? b2 : c; }
+      line[x] = v & 255;
+    }
+    line.copy(px, y * st);
+    prev = line;
+  }
   return { w, h, px };
 }
 const crcT = new Int32Array(256).map((_, n) => { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xedb88320 ^ (c >>> 1) : c >>> 1; return c; });
@@ -150,5 +165,21 @@ for (const [dst, src, modo] of L) {
   comps.sort((a, b) => a[1] - b[1] > 60 ? 1 : b[1] - a[1] > 60 ? -1 : a[0] - b[0]);
   comps.forEach((bb, i) => writePNG(path.join(DST, `tripulacion_${i + 1}.png`), crop(img, bb)));
   console.log('tripulación:', JSON.stringify(comps));
+}
+// Logos de Clínica Ser Humano (docs/): recortados al contenido, más el símbolo solo (para el ícono)
+{
+  const DOCS = path.join(__dirname, '..', 'docs');
+  const naranja = readPNG(path.join(DOCS, 'clinica.png'));
+  const blanco = readPNG(path.join(DOCS, 'clinica2.png'));
+  const caja = bbox(naranja);
+  writePNG(path.join(DST, 'csh_logo_naranja.png'), crop(naranja, caja));
+  writePNG(path.join(DST, 'csh_logo_blanco.png'), crop(blanco, caja));
+  // el símbolo es el bloque de la izquierda, antes del texto "Ser humano"
+  const izq = crop(naranja, [0, 0, Math.round(naranja.w * 0.34), naranja.h]);
+  const simbolo = crop(izq, bbox(izq));
+  writePNG(path.join(DST, 'csh_simbolo_naranja.png'), simbolo);
+  const izqB = crop(blanco, [0, 0, Math.round(blanco.w * 0.34), blanco.h]);
+  writePNG(path.join(DST, 'csh_simbolo_blanco.png'), crop(izqB, bbox(izqB)));
+  console.log('logos CSH:', caja.join(','), 'símbolo:', simbolo.w + 'x' + simbolo.h);
 }
 console.log('imágenes preparadas:', L.length);

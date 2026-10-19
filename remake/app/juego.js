@@ -33,6 +33,8 @@ const capital = (txt) => txt.charAt(0).toUpperCase() + txt.slice(1);
 const parrafos = (txt) => txt.split(/\n{2,}/).map((p) => h('p', null, p.split('\n').flatMap((l, i) => (i ? [h('br'), l] : [l]))));
 const flecha = () => h('span', { class: 'flecha', 'aria-hidden': 'true' }, '→');
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+// Colores corporativos de Ser Humano (deben coincidir con estilos.css)
+const COLOR = { naranja: '#fc6b12', dorado: '#f8bc08', crema: '#f4e9d4', blanco: '#fffaf0', marino: '#10263d' };
 
 function leerPref(k, def) { try { const v = localStorage.getItem('teamwork.' + k); return v == null ? def : JSON.parse(v); } catch { return def; } }
 function guardarPref(k, v) { try { localStorage.setItem('teamwork.' + k, JSON.stringify(v)); } catch { /* sin almacenamiento */ } }
@@ -253,8 +255,8 @@ ESCENAS.portada = () => {
   const seguir = () => { Sonido.click(); S = Object.assign(nuevoEstado(), guardada); ir(S.escena, ...(S.args || [])); };
   const puedeSeguir = guardada && guardada.escena !== 'despedida';
   montar(h('div', { class: 'portada' },
-    imagen('logo_velas', '', 'logo'),
-    h('p', { class: 'presenta' }, `${MARCA.nombre} ${t('Sigla-1')}`),
+    imagen('csh_logo_blanco', MARCA.nombre, 'logo'),
+    h('p', { class: 'presenta' }, t('Sigla-1')),
     h('h1', null, MARCA.producto),
     h('p', { class: 'lema' }, MARCA.lema),
     h('div', { class: 'botonera' },
@@ -269,7 +271,7 @@ ESCENAS.presentacion = () => {
   Sonido.tocar('aeolus');
   const seguir = () => { Sonido.detener(); ir('intro'); };
   montar(h('div', { class: 'presentacion', onclick: seguir },
-    h('div', { class: 'p1' }, MARCA.nombre),
+    h('div', { class: 'p1' }, imagen('csh_logo_blanco', MARCA.nombre)),
     h('div', { class: 'p2' }, t('Sigla-1')),
     h('div', { class: 'p3' }, MARCA.producto),
     h('div', { class: 'p4' }, MARCA.lema),
@@ -864,17 +866,17 @@ function velero(v) {
   const base = 288;
   const vela = (d, color, visible, retraso) => s('path', { d, fill: color, class: 'vela' + (visible ? '' : ' oculta'), style: `animation-delay:${retraso}s`, stroke: 'rgba(255,255,255,.35)', 'stroke-width': '1.5' });
   return s('svg', { class: 'velero', viewBox: '0 0 520 400', role: 'img', 'aria-label': 'Barco con las velas ganadas' },
-    s('defs', null, s('linearGradient', { id: 'casco', x1: '0', x2: '0', y1: '0', y2: '1' }, s('stop', { offset: '0', 'stop-color': '#c0392b' }), s('stop', { offset: '1', 'stop-color': '#6d1a1a' }))),
-    s('path', { d: 'M20 372 C 140 352 380 392 500 368', stroke: 'rgba(79,209,197,.35)', 'stroke-width': '3', fill: 'none' }),
+    s('defs', null, s('linearGradient', { id: 'casco', x1: '0', x2: '0', y1: '0', y2: '1' }, s('stop', { offset: '0', 'stop-color': '#ffffff' }), s('stop', { offset: '1', 'stop-color': '#c9d6e3' }))),
+    s('path', { d: 'M20 372 C 140 352 380 392 500 368', stroke: 'rgba(248,188,8,.35)', 'stroke-width': '3', fill: 'none' }),
     s('line', { x1: 210, y1: 300, x2: 210, y2: 40, stroke: '#8a5a2b', 'stroke-width': 6, 'stroke-linecap': 'round' }),
     s('line', { x1: 340, y1: 300, x2: 340, y2: 70, stroke: '#8a5a2b', 'stroke-width': 5, 'stroke-linecap': 'round' }),
-    vela(`M206 ${base - hP} L206 ${base} L80 ${base} Q 130 ${base - hP * 0.45} 206 ${base - hP} Z`, '#f2b544', v.verPragmatismo, 0.1),
-    vela(`M336 ${base - hC} L336 ${base} L232 ${base} Q 270 ${base - hC * 0.45} 336 ${base - hC} Z`, '#4fd1c5', v.verCoherencia, 0.35),
-    vela(`M346 ${base - hF} L346 ${base} L470 ${base + 8} Z`, '#ef7d6c', v.verCreatividad, 0.6),
-    vela(`M346 ${base - hF * 0.55} L346 ${base} L430 ${base + 4} Z`, '#f59f8f', v.verCreatividad, 0.75),
+    vela(`M206 ${base - hP} L206 ${base} L80 ${base} Q 130 ${base - hP * 0.45} 206 ${base - hP} Z`, COLOR.naranja, v.verPragmatismo, 0.1),
+    vela(`M336 ${base - hC} L336 ${base} L232 ${base} Q 270 ${base - hC * 0.45} 336 ${base - hC} Z`, COLOR.dorado, v.verCoherencia, 0.35),
+    vela(`M346 ${base - hF} L346 ${base} L470 ${base + 8} Z`, COLOR.crema, v.verCreatividad, 0.6),
+    vela(`M346 ${base - hF * 0.55} L346 ${base} L430 ${base + 4} Z`, COLOR.blanco, v.verCreatividad, 0.75),
     s('path', { d: 'M50 300 L490 300 L452 350 Q 270 374 96 350 Z', fill: 'url(#casco)' }),
-    s('path', { d: 'M58 312 L482 312', stroke: '#f4e9d4', 'stroke-width': 4, opacity: 0.85 }),
-    S.nombre && s('text', { x: 270, y: 338, 'text-anchor': 'middle', fill: '#f4e9d4', 'font-family': 'Georgia, serif', 'font-size': 17 }, S.nombre));
+    s('path', { d: 'M58 312 L482 312', stroke: COLOR.naranja, 'stroke-width': 5 }),
+    S.nombre && s('text', { x: 270, y: 338, 'text-anchor': 'middle', fill: COLOR.marino, 'font-family': 'Outfit, sans-serif', 'font-weight': 600, 'font-size': 18 }, S.nombre));
 }
 
 function indicador(nombre, color, valor, texto, visible) {
@@ -896,9 +898,9 @@ ESCENAS.velas = () => {
       cabecera('Llegada', 'Las velas ganadas'),
       h('p', { class: 'contexto' }, t('Ultima2-4')),
       h('div', { class: 'leyenda' },
-        indicador(t('Ultima2-1'), '#f2b544', v.pE, `${v.pE} %`, v.verPragmatismo),
-        indicador(t('Ultima2-2'), '#4fd1c5', v.pI, `${v.pI} %`, v.verCoherencia),
-        indicador(t('Ultima2-3'), '#ef7d6c', S.crea * 5, `${S.crea} pts`, v.verCreatividad)),
+        indicador(t('Ultima2-1'), COLOR.naranja, v.pE, `${v.pE} %`, v.verPragmatismo),
+        indicador(t('Ultima2-2'), COLOR.dorado, v.pI, `${v.pI} %`, v.verCoherencia),
+        indicador(t('Ultima2-3'), COLOR.crema, S.crea * 5, `${S.crea} pts`, v.verCreatividad)),
       h('p', { class: 'millas' }, 'Han permitido recorrer ', h('b', null, v.recorrido.toLocaleString('es')), ' millas, es decir, el ', h('b', null, `${v.viaje} %`), ' de tu objetivo.'),
       h('div', { class: 'botonera' },
         h('button', { class: 'boton', type: 'button', onclick: () => { Sonido.click(); ir('despedida'); } }, 'Continuar', flecha()),
@@ -949,9 +951,9 @@ function abrirSituacion() {
     s('path', { d: 'M160 44 L140 100 H180 Z', fill: '#21466b' }),
     s('g', { class: 'brazo', style: `transform: rotate(${giro}deg)` },
       s('rect', { x: 30, y: 38, width: 260, height: 6, rx: 3, fill: '#a3b8cc' }),
-      s('circle', { cx: 40, cy: 54, r: 14, fill: '#f2b544' }), s('circle', { cx: 280, cy: 54, r: 14, fill: '#4fd1c5' })),
-    s('text', { x: 40, y: 18, 'text-anchor': 'middle', fill: '#f2b544', 'font-size': 12 }, 'Pragmatismo'),
-    s('text', { x: 280, y: 18, 'text-anchor': 'middle', fill: '#4fd1c5', 'font-size': 12 }, 'Coherencia'));
+      s('circle', { cx: 40, cy: 54, r: 14, fill: COLOR.naranja }), s('circle', { cx: 280, cy: 54, r: 14, fill: COLOR.dorado })),
+    s('text', { x: 40, y: 18, 'text-anchor': 'middle', fill: COLOR.naranja, 'font-size': 12 }, 'Pragmatismo'),
+    s('text', { x: 280, y: 18, 'text-anchor': 'middle', fill: COLOR.dorado, 'font-size': 12 }, 'Coherencia'));
   const recorrido = clamp(v.viaje, 0, 100);
   const dato = (nombre, valor, pct) => h('div', { class: 'dato' },
     h('div', { class: 'fila' }, h('span', null, nombre), h('span', null, valor)),
@@ -1012,7 +1014,6 @@ function imprimirDiario() {
 }
 
 // ============================================================ Arranque
-$('#marca-nombre').textContent = MARCA.nombre;
 $('#btn-sonido').addEventListener('click', () => Sonido.alternar());
 $('#btn-situacion').addEventListener('click', abrirSituacion);
 $('#btn-salir').addEventListener('click', abrirSalir);

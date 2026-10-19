@@ -1,10 +1,10 @@
-// Crea remake/app/assets/icono.ico (PNG de 256 px dentro de un ICO) a partir del barquito del logo.
+// Crea remake/app/assets/icono.ico (PNG de 256 px dentro de un ICO) a partir del símbolo de Clínica Ser Humano.
 'use strict';
 const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 
-const SRC = path.join(__dirname, '..', 'remake', 'app', 'assets', 'img', 'logo_barca.png');
+const SRC = path.join(__dirname, '..', 'remake', 'app', 'assets', 'img', 'csh_simbolo_naranja.png');
 const DST = path.join(__dirname, '..', 'remake', 'app', 'assets', 'icono.ico');
 
 function readPNG(f) {

@@ -4,6 +4,17 @@ Juego sobre trabajo en equipo, remasterizado a partir del original **TeamWork** 
 
 Remasterización y desarrollo: **Jorge Urgilés Ruiz**, Ingeniero en Software — [jorge-urgiles-ruiz.vercel.app](https://jorge-urgiles-ruiz.vercel.app).
 
+## Descargar
+
+| Plataforma | Descarga |
+|---|---|
+| Android | [TeamWork.apk](https://github.com/clinicaserhumano/teamwork/releases/latest/download/TeamWork.apk) |
+| Windows | [TeamWork-Windows.zip](https://github.com/clinicaserhumano/teamwork/releases/latest/download/TeamWork-Windows.zip) |
+
+Todas las versiones: [Releases](https://github.com/clinicaserhumano/teamwork/releases).
+
+## Contenido del repositorio
+
 | Carpeta | Contenido |
 |---|---|
 | `remake/` | Juego nuevo (HTML5 + Electron). Ver [remake/LEAME.md](remake/LEAME.md) |

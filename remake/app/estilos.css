@@ -340,8 +340,6 @@ img { max-width: 100%; display: block; }
 .matriz input:hover { border-color: var(--oro); }
 
 /* ---------- Botadura ---------- */
-.botella { height: 100%; display: grid; place-items: center; }
-.botella img { height: 78%; width: auto; }
 .choque { animation: choque 0.6s ease; }
 @keyframes choque { 30% { transform: rotate(-14deg) translateX(-20px); } 60% { transform: rotate(6deg); } }
 
@@ -436,11 +434,10 @@ img { max-width: 100%; display: block; }
 .motivo[disabled]:not(.elegido) .foto img { filter: grayscale(1); }
 .hueco img { width: 40px; height: 40px; object-fit: cover; border-radius: 8px; }
 .ventana img { transition: opacity 0.35s ease, transform 0.6s ease; }
-.ventana.brindis img { animation: brindis 1.6s ease forwards; }
-@keyframes brindis {
-  20% { transform: rotate(-8deg) scale(1.05); }
-  45% { transform: rotate(6deg) scale(1.08); filter: brightness(1.6); }
-  100% { transform: scale(1.12); filter: brightness(1.1); }
+.ventana.zarpar img { animation: zarpar 1.7s ease-in-out forwards; }
+@keyframes zarpar {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.15) translateX(-4%); filter: brightness(1.15) saturate(1.1); }
 }
 .enlace { background: none; border: 0; padding: 0; color: var(--dorado); cursor: pointer; text-decoration: underline; font-size: inherit; }
 .creditos-lista { display: grid; gap: 8px; max-height: 55vh; overflow: auto; }

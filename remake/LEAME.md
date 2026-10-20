@@ -21,7 +21,9 @@ Teclas: números `1`–`9` eligen opciones, `Intro` continúa, `Esc` sale, `F11`
 | Logos de Ser Humano | `app/assets/img/csh_*.png` (se generan desde `../docs/` con `../herramientas/preparar_imagenes.js`) |
 | Puntuaciones, escenas, orden del viaje | `app/juego.js` |
 | Fotografías | `app/assets/fotos` (Unsplash, ver [CREDITOS.md](CREDITOS.md)). Para cambiarlas: editar `../herramientas/fotos.json`, ejecutar `buscar_fotos.js` (necesita `herramientas/claves.json` con la clave de Unsplash) y elegir en `integrar_fotos.js` |
-| Sonidos | `app/assets/snd` |
+| Sonidos de ambiente y efectos | `app/assets/snd` (Freesound, licencia CC0, ver [CREDITOS.md](CREDITOS.md)). Para cambiarlos: editar `../herramientas/sonidos.json`, ejecutar `buscar_sonidos.js` (necesita `"freesound"` en `herramientas/claves.json`), revisar con `analizar_sonidos.js` y elegir en `procesar_sonidos.js` |
+| Qué sonido suena en cada escena | llamadas a `Sonido.ambiente(...)` / `Sonido.efecto(...)` en `app/juego.js` |
+| Sonidos de interfaz (clic, elegir, acierto, error) | se generan por código: objeto `SONIDOS_UI` en `app/juego.js` |
 | Ícono del programa | `app/assets/icono.ico` |
 
 > `app/textos.js` se generó con `../herramientas/generar_textos.js`. Si lo editas a mano, no vuelvas a ejecutar ese script o perderás los cambios.
@@ -43,7 +45,9 @@ El resultado queda en `dist/TeamWork-win32-x64/`. Para distribuirlo hay que copi
 
 ## Cambios respecto al original
 
-- Interfaz nueva (pantalla adaptable, alta resolución) con fotografías nuevas de Unsplash y los sonidos originales.
+- Interfaz nueva (pantalla adaptable, alta resolución) con fotografías nuevas de Unsplash.
+- Sonidos nuevos: ambientes en bucle por escena y efectos de Freesound (CC0), más sonidos de interfaz sintetizados. Ya no se usa ningún sonido de 1998.
+- La botadura muestra un barco zarpando en lugar de una botella de champán.
 - Solo español; los textos en italiano y alemán siguen en `../extraido/recursos/TESTIITA` y `TESTIDE`.
 - Corregidos dos errores del original: elegir *Felicidad* como primer objetivo no sumaba puntos, y la 3.ª opción de *La isla* aplicaba la puntuación de la 1.ª.
 - Corregidas erratas de la traducción española (lista en `../herramientas/generar_textos.js`).

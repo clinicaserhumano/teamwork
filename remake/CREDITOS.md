@@ -39,7 +39,7 @@ Fotografías de [Unsplash](https://unsplash.com/?utm_source=teamwork&utm_medium=
 | decide_grupo | [Campaign Creators](https://unsplash.com/@campaign_creators?utm_source=teamwork&utm_medium=referral) | [ver en Unsplash](https://unsplash.com/photos/man-standing-in-front-of-people-sitting-beside-table-with-laptop-computers-gMsnXqILjp4) |
 | decide_cada | [Tim van der Kuip](https://unsplash.com/@timmykp?utm_source=teamwork&utm_medium=referral) | [ver en Unsplash](https://unsplash.com/photos/man-sitting-on-chair-wearing-gray-crew-neck-long-sleeved-shirt-using-apple-magic-keyboard-CPs2X8JYmS8) |
 | decide_niveles | [Dan Freeman](https://unsplash.com/@danfreemanphoto?utm_source=teamwork&utm_medium=referral) | [ver en Unsplash](https://unsplash.com/photos/white-and-brown-concrete-spiral-stairs-WHPsxhB4mWQ) |
-| botella | [Marco Palumbo](https://unsplash.com/@sapporo2025?utm_source=teamwork&utm_medium=referral) | [ver en Unsplash](https://unsplash.com/photos/a-golden-champagne-bottle-shines-in-the-light-t2Z5SMwIOyQ) |
+| botadura | [Hector John Periquin](https://unsplash.com/@hectorjp?utm_source=teamwork&utm_medium=referral) | [ver en Unsplash](https://unsplash.com/photos/a-boat-sailing-on-the-water-near-a-rocky-cliff-ZfTouherc3M) |
 | grafico | [Maxim Hopman](https://unsplash.com/@nampoh?utm_source=teamwork&utm_medium=referral) | [ver en Unsplash](https://unsplash.com/photos/stock-market-candlestick-chart-on-dark-screen-fiXLQXAhCfk) |
 | ev_affoll | [Lok Kwan](https://unsplash.com/@lok_kwan?utm_source=teamwork&utm_medium=referral) | [ver en Unsplash](https://unsplash.com/photos/numerous-sailboats-moored-in-a-tranquil-blue-bay-HO5wvEwaNmQ) |
 | ev_tempor | [Torsten Dederichs](https://unsplash.com/@tdederichs?utm_source=teamwork&utm_medium=referral) | [ver en Unsplash](https://unsplash.com/photos/huge-wave-at-daytime-KrQJzrZiCak) |
@@ -49,3 +49,30 @@ Fotografías de [Unsplash](https://unsplash.com/?utm_source=teamwork&utm_medium=
 | ev_isola | [Marek Okon](https://unsplash.com/@marekokon?utm_source=teamwork&utm_medium=referral) | [ver en Unsplash](https://unsplash.com/photos/photography-of-island-against-sky-WScpndZFrOM) |
 | ev_confus | [Vitaly Gariev](https://unsplash.com/@silverkblack?utm_source=teamwork&utm_medium=referral) | [ver en Unsplash](https://unsplash.com/photos/a-woman-talking-to-a-man-at-a-table-pBJDpxw8Ptk) |
 | ev_crisi | [Mick Haupt](https://unsplash.com/@rocinante_11?utm_source=teamwork&utm_medium=referral) | [ver en Unsplash](https://unsplash.com/photos/brown-and-white-boat-on-brown-sand-under-blue-sky-during-daytime-c9enJh1d7AI) |
+
+# Créditos de los sonidos
+
+Sonidos de [Freesound](https://freesound.org) con licencia [CC0](https://creativecommons.org/publicdomain/zero/1.0/) (dominio público), encontrados con [Openverse](https://openverse.org). Los sonidos de la interfaz (clic, elección, acierto, error) se generan por código.
+
+| Sonido del juego | Título original | Autor |
+|---|---|---|
+| amb_olas | [Waves of Hawaii](https://freesound.org/people/florianreichelt/sounds/450755/) | florianreichelt |
+| amb_puerto | [Harbor Ambience 1](https://freesound.org/people/clif_creates/sounds/254125/) | clif_creates |
+| amb_viento | [Wind__Artic__Cold.wav](https://freesound.org/people/cobratronik/sounds/117136/) | cobratronik |
+| amb_tormenta | [Rain and Thunder 4](https://freesound.org/people/FlatHill/sounds/237729/) | FlatHill |
+| amb_tambores | [African tribal drums, beat 1](https://freesound.org/people/peridactyloptrix/sounds/198491/) | peridactyloptrix |
+| amb_multitud | [Indoor adult murmur, small group.wav](https://freesound.org/people/SpliceSound/sounds/260121/) | SpliceSound |
+| amb_oficina | [Office Ambience.wav](https://freesound.org/people/DiArchangeli/sounds/108695/) | DiArchangeli |
+| amb_tension | [ambience03.wav](https://freesound.org/people/yewbic/sounds/33796/) | yewbic |
+| musica | [Wandering](https://freesound.org/people/Andrewkn/sounds/455855/) | Andrewkn |
+| ef_gaviotas | [sea gulls.wav](https://freesound.org/people/Snapper4298/sounds/166703/) | Snapper4298 |
+| ef_lobo | [Wolf howl](https://freesound.org/people/NaturesTemper/sounds/398430/) | NaturesTemper |
+| ef_deporte | [RoaringCrowd.wav](https://freesound.org/people/benfree/sounds/130568/) | benfree |
+| ef_militar | [Military Snaredrum](https://freesound.org/people/aUREa/sounds/475246/) | aUREa |
+| ef_amigos | [laughs](https://freesound.org/people/wrc4all/sounds/403058/) | wrc4all |
+| ef_familia | [children1.mp3](https://freesound.org/people/yacou/sounds/190894/) | yacou |
+| ef_aplausos | [Applause 2.WAV](https://freesound.org/people/Sandermotions/sounds/277021/) | Sandermotions |
+| ef_campana | [Ship Bell Two Chimes](https://freesound.org/people/Sojan/sounds/353232/) | Sojan |
+| ef_bocina | [ship horn very close](https://freesound.org/people/tierrafilm@gmail.com/sounds/420716/) | tierrafilm@gmail.com |
+| ef_cajas | [open-cardboard-box-compartment.wav](https://freesound.org/people/newagesoup/sounds/364740/) | newagesoup |
+| ef_trueno | [th_loud.wav](https://freesound.org/people/Pingel/sounds/2689/) | Pingel |

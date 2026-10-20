@@ -48,31 +48,106 @@ function cada(fn, ms) { const id = setInterval(fn, ms); temporizadores.add(id); 
 function cancelarTemporizadores() { for (const id of temporizadores) { clearTimeout(id); clearInterval(id); } temporizadores.clear(); }
 
 // ============================================================ Sonido
+// Tres capas: ambiente (bucle de fondo con fundido), efectos (archivos de una sola vez)
+// e interfaz (sonidos sintetizados con Web Audio, sin archivos).
+const VOL_AMBIENTE = 0.32, VOL_EFECTO = 0.75;
+
+function fundido(audio, hasta, ms, alFinal) {
+  const desde = audio.volume, pasos = Math.max(1, Math.round(ms / 40));
+  let i = 0;
+  clearInterval(audio._fundido);
+  audio._fundido = setInterval(() => {
+    i++;
+    audio.volume = clamp(desde + (hasta - desde) * (i / pasos), 0, 1);
+    if (i >= pasos) { clearInterval(audio._fundido); if (alFinal) alFinal(); }
+  }, 40);
+}
+
+const Sintetizador = {
+  ctx: null,
+  contexto() {
+    if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (this.ctx.state === 'suspended') this.ctx.resume();
+    return this.ctx;
+  },
+  // Nota con envolvente suave (tipo campana/marimba)
+  nota(frec, inicio, dur, { tipo = 'sine', vol = 0.18, armonico = 0 } = {}) {
+    const c = this.contexto(), t0 = c.currentTime + inicio;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(vol, t0 + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    g.connect(c.destination);
+    for (const [f, v] of [[frec, 1], [frec * 2, armonico]]) {
+      if (!v) continue;
+      const o = c.createOscillator(), gv = c.createGain();
+      o.type = tipo; o.frequency.setValueAtTime(f, t0); gv.gain.value = v;
+      o.connect(gv).connect(g); o.start(t0); o.stop(t0 + dur + 0.05);
+    }
+  },
+  click() {
+    const c = this.contexto(), t0 = c.currentTime;
+    const o = c.createOscillator(), g = c.createGain();
+    o.type = 'triangle';
+    o.frequency.setValueAtTime(1800, t0);
+    o.frequency.exponentialRampToValueAtTime(600, t0 + 0.05);
+    g.gain.setValueAtTime(0.12, t0);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.07);
+    o.connect(g).connect(c.destination); o.start(t0); o.stop(t0 + 0.08);
+  },
+};
+
+const SONIDOS_UI = {
+  click: () => Sintetizador.click(),
+  elegir: () => { Sintetizador.nota(659, 0, 0.18, { vol: 0.14, armonico: 0.25 }); Sintetizador.nota(988, 0.07, 0.3, { vol: 0.12, armonico: 0.2 }); },
+  exito: () => [523, 659, 784, 1047].forEach((f, i) => Sintetizador.nota(f, i * 0.09, 0.9, { vol: 0.13, armonico: 0.3 })),
+  error: () => { Sintetizador.nota(392, 0, 0.25, { tipo: 'triangle', vol: 0.14 }); Sintetizador.nota(311, 0.16, 0.45, { tipo: 'triangle', vol: 0.14 }); },
+  aviso: () => { Sintetizador.nota(784, 0, 0.5, { vol: 0.1, armonico: 0.4 }); Sintetizador.nota(1175, 0.12, 0.7, { vol: 0.08, armonico: 0.3 }); },
+  nota1: () => Sintetizador.nota(523, 0, 0.6, { vol: 0.15, armonico: 0.35 }),
+  nota2: () => Sintetizador.nota(659, 0, 0.6, { vol: 0.15, armonico: 0.35 }),
+  nota3: () => Sintetizador.nota(784, 0, 0.6, { vol: 0.15, armonico: 0.35 }),
+};
+
 const Sonido = {
   activo: leerPref('sonido', true),
-  canal: null,
-  tocar(nombre, alTerminar) {
+  fondo: null, fondoNombre: null, canal: null,
+  // Ambiente en bucle; null lo apaga. Si ya suena el mismo, no se reinicia.
+  ambiente(nombre) {
+    if (nombre === this.fondoNombre) return;
+    const anterior = this.fondo;
+    if (anterior) fundido(anterior, 0, 900, () => anterior.pause());
+    this.fondo = null; this.fondoNombre = nombre;
+    if (!nombre || !this.activo) return;
+    const a = new Audio(`assets/snd/${nombre}.mp3`);
+    a.loop = true; a.volume = 0;
+    a.play().then(() => fundido(a, VOL_AMBIENTE, 1400)).catch(() => {});
+    this.fondo = a;
+  },
+  // Efecto de una sola vez; alTerminar se llama al acabar (como mucho a los 4 s)
+  efecto(nombre, alTerminar) {
     this.detener();
     let hecho = false;
     const fin = () => { if (!hecho) { hecho = true; if (alTerminar) alTerminar(); } };
     if (!this.activo) { if (alTerminar) luego(fin, 400); return; }
     const a = new Audio(`assets/snd/${nombre}.mp3`);
-    a.volume = 0.7;
+    a.volume = VOL_EFECTO;
     this.canal = a;
     if (alTerminar) { a.addEventListener('ended', fin); a.addEventListener('error', fin); luego(fin, 4000); }
     a.play().catch(fin);
   },
-  click() {
-    if (!this.activo) return;
-    const a = new Audio('assets/snd/click.mp3');
-    a.volume = 0.5;
-    a.play().catch(() => {});
-  },
-  detener() { if (this.canal) { this.canal.pause(); this.canal = null; } },
+  ui(tipo) { if (this.activo) { try { SONIDOS_UI[tipo](); } catch { /* audio no disponible */ } } },
+  click() { this.ui('click'); },
+  detener() { if (this.canal) { const c = this.canal; fundido(c, 0, 300, () => c.pause()); this.canal = null; } },
   alternar() {
     this.activo = !this.activo;
     guardarPref('sonido', this.activo);
-    if (!this.activo) this.detener();
+    if (!this.activo) {
+      this.detener();
+      if (this.fondo) this.fondo.pause();
+      this.fondo = null;
+    } else {
+      const n = this.fondoNombre; this.fondoNombre = null; this.ambiente(n);
+    }
     pintarBotonSonido();
   },
 };
@@ -169,7 +244,7 @@ function listaOpciones(items, { pizarra, vent, columnas = false } = {}) {
     const elegir = () => {
       if (bloqueado) return;
       bloqueado = true;
-      Sonido.click();
+      Sonido.ui('elegir');
       mostrar();
       b.classList.add('activa');
       ol.querySelectorAll('.opcion').forEach((o) => { if (o !== b) o.disabled = true; });
@@ -204,7 +279,7 @@ function rejillaTarjetas(items, { pizarra, clase = 'tarjetas' } = {}) {
       const elegir = () => {
         if (bloqueado) return;
         bloqueado = true;
-        Sonido.click();
+        Sonido.ui('elegir');
         b.classList.add('elegida');
         luego(it.elegir, 220);
       };
@@ -252,6 +327,7 @@ function aviso(txt) {
 
 // ============================================================ Portada y presentación
 ESCENAS.portada = () => {
+  Sonido.ambiente('amb_olas');
   const guardada = cargarPartida();
   const nuevo = () => { Sonido.click(); S = nuevoEstado(); borrarPartida(); ir('presentacion'); };
   const seguir = () => { Sonido.click(); S = Object.assign(nuevoEstado(), guardada); ir(S.escena, ...(S.args || [])); };
@@ -271,8 +347,8 @@ ESCENAS.portada = () => {
 };
 
 ESCENAS.presentacion = () => {
-  Sonido.tocar('aeolus');
-  const seguir = () => { Sonido.detener(); ir('intro'); };
+  Sonido.ambiente('musica');
+  const seguir = () => ir('intro');
   montar(h('div', { class: 'presentacion', onclick: seguir },
     h('div', { class: 'p1' }, imagen('csh_logo_blanco', MARCA.nombre)),
     h('div', { class: 'p2' }, t('Sigla-1')),
@@ -285,7 +361,7 @@ ESCENAS.presentacion = () => {
 
 ESCENAS.intro = (paso = 1) => {
   if (paso === 1) {
-    Sonido.tocar('pan21');
+    Sonido.ambiente('amb_olas');
     relato({ etiqueta: 'Antes de zarpar', titulo: linea(t('Intro1-1')), img: 'barco_grande', vent: { cubrir: true },
       botones: [{ texto: 'Continuar', accion: () => ir('intro', 2) }] });
   } else {
@@ -318,7 +394,7 @@ const PUNTOS_PRIMA = {
 };
 
 ESCENAS.prima = () => {
-  Sonido.tocar('soldier');
+  Sonido.ambiente('amb_olas');
   const elegidos = [];
   const huecos = [0, 1, 2].map((i) => h('div', { class: 'hueco' }, h('b', null, i + 1 + 'º'), h('span', null, 'Sin elegir')));
   const continuar = h('button', { class: 'boton', type: 'button', disabled: true, onclick: () => {
@@ -371,7 +447,8 @@ const barcoCompatible = () => S.rotta === S.barca || S.barca === 4 || S.rotta ==
 
 ESCENAS.eleccion = () => {
   if (S.scelta >= 4) return ir(barcoCompatible() ? 'botadura' : 'reintentar');
-  Sonido.tocar(S.visitasEleccion++ ? 'pan8' : 'pan21');
+  Sonido.ambiente('amb_puerto');
+  if (S.visitasEleccion++) Sonido.ui('aviso');
   const items = PARTES.map((p) => {
     const orden = S.lScelta.indexOf(p.id);
     return {
@@ -394,7 +471,7 @@ const BARCOS = [null,
 ];
 
 ESCENAS.barcos = () => {
-  Sonido.tocar('craga45');
+  Sonido.ambiente('amb_puerto');
   const piz = pizarra();
   montar(lienzoSolo(
     cabecera('Preparación · El barco', t('Barche1-1')),
@@ -446,14 +523,14 @@ ESCENAS.financiacion = () => {
 
 // ============================================================ La ruta
 const RUTAS = [null,
-  { titulo: 'Rotte2-1', desc: 'Rotte2-2', img: 'ruta_1', snd: 'sciacqu' },
-  { titulo: 'Rotte4-1', desc: 'Rotte4-2', img: 'ruta_2', snd: 'vento' },
-  { titulo: 'rotte3-1', desc: 'rotte3-2', img: 'ruta_3', snd: 'tempesta' },
-  { titulo: 'Rotte5-1', desc: 'Rotte5-2', img: 'ruta_4', snd: 'mockbird' },
+  { titulo: 'Rotte2-1', desc: 'Rotte2-2', img: 'ruta_1', amb: 'amb_olas' },
+  { titulo: 'Rotte4-1', desc: 'Rotte4-2', img: 'ruta_2', amb: 'amb_viento' },
+  { titulo: 'rotte3-1', desc: 'rotte3-2', img: 'ruta_3', amb: 'amb_tormenta' },
+  { titulo: 'Rotte5-1', desc: 'Rotte5-2', img: 'ruta_4', amb: 'amb_olas', ef: 'ef_gaviotas' },
 ];
 
 ESCENAS.rutas = () => {
-  Sonido.tocar('vento');
+  Sonido.ambiente('amb_viento');
   const piz = pizarra();
   montar(lienzoSolo(
     cabecera('Preparación · La ruta', t('Rotte1-1')),
@@ -466,7 +543,8 @@ ESCENAS.rutas = () => {
 
 ESCENAS.ruta = (n) => {
   const r = RUTAS[n];
-  Sonido.tocar(r.snd);
+  Sonido.ambiente(r.amb);
+  if (r.ef) Sonido.efecto(r.ef);
   relato({
     etiqueta: 'Preparación · La ruta', titulo: t(r.titulo), texto: t(r.desc), img: r.img,
     botones: [
@@ -489,9 +567,9 @@ const VALORES = {
   F: { nombre: 'Cambusa1-5', desc: 'Cambusa2-6', niveles: ['Cambusa3-1', 'Cambusa3-2', 'Cambusa3-3'], cal: [{ effi: 3, errore: 1 }, { idea: 2 }, { idea: 3 }], final: [{ idea: 6 }, { idea: 4 }, { idea: 2 }] },
 };
 const NIVELES = [
-  { nombre: 'Poca', img: 'bodega_poca', carga: 1, snd: 'do' },
-  { nombre: 'Bastante', img: 'bodega_media', carga: 2, snd: 'mi' },
-  { nombre: 'Mucha', img: 'bodega_mucha', carga: 3, snd: 'sol' },
+  { nombre: 'Poca', img: 'bodega_poca', carga: 1, snd: 'nota1' },
+  { nombre: 'Bastante', img: 'bodega_media', carga: 2, snd: 'nota2' },
+  { nombre: 'Mucha', img: 'bodega_mucha', carga: 3, snd: 'nota3' },
 ];
 const LIMITE_CARGA = 7;
 
@@ -519,7 +597,7 @@ ESCENAS.bodega = () => {
     completarBodega();
     return ir('eleccion');
   }
-  if (rango === 0) Sonido.tocar('quick');
+  Sonido.ambiente('amb_puerto');
   const quedan = ['L', 'U', 'F'].filter((k) => !S.luf[k]);
   decision({
     etiqueta: 'Preparación · La bodega',
@@ -542,7 +620,8 @@ ESCENAS.bodegaNivel = (k) => {
     rejillaTarjetas(NIVELES.map((n, i) => ({
       nombre: n.nombre, imagen: n.img, detalle: linea(t(v.niveles[i])), pie: `+${n.carga} de carga`,
       elegir: () => {
-        Sonido.tocar(n.snd);
+        Sonido.ui(n.snd);
+        Sonido.efecto('ef_cajas');
         S.carico += n.carga;
         sumar(v.cal[i]);
         S.lufNivel[k] = i;
@@ -565,7 +644,7 @@ function completarBodega() {
 }
 
 ESCENAS.bodegaExceso = () => {
-  Sonido.tocar('drop');
+  Sonido.ui('error');
   relato({
     etiqueta: 'Preparación · La bodega', titulo: t('Cambusa6-1'), texto: `${t('Cambusa6-2')}\n\n${t('Cambusa6-3')}`,
     img: 'bodega_mucha',
@@ -578,11 +657,11 @@ ESCENAS.bodegaExceso = () => {
 
 // ============================================================ La tripulación (Equipe) y las decisiones (Dec)
 const VIDA = [
-  { texto: 'equipe2-1', img: 'tripulacion_1', snd: 'wolf', ef: { effi: 2 } },
-  { texto: 'equipe2-2', img: 'tripulacion_5', snd: 'squadra', ef: { effi: 3 } },
-  { texto: 'equipe2-3', img: 'tripulacion_4', snd: 'sveglia', ef: { effi: 3, idea: 3 } },
-  { texto: 'equipe2-4', img: 'tripulacion_2', snd: 'samici', ef: { idea: 2 } },
-  { texto: 'equipe2-5', img: 'tripulacion_3', snd: 'fldrhimo', ef: { idea: 2 } },
+  { texto: 'equipe2-1', img: 'tripulacion_1', snd: 'ef_lobo', ef: { effi: 2 } },
+  { texto: 'equipe2-2', img: 'tripulacion_5', snd: 'ef_deporte', ef: { effi: 3 } },
+  { texto: 'equipe2-3', img: 'tripulacion_4', snd: 'ef_militar', ef: { effi: 3, idea: 3 } },
+  { texto: 'equipe2-4', img: 'tripulacion_2', snd: 'ef_amigos', ef: { idea: 2 } },
+  { texto: 'equipe2-5', img: 'tripulacion_3', snd: 'ef_familia', ef: { idea: 2 } },
 ];
 
 ESCENAS.tripulacion = () => {
@@ -590,7 +669,7 @@ ESCENAS.tripulacion = () => {
     cabecera('Preparación · La tripulación', t('Equipe1-1')),
     rejillaTarjetas(VIDA.map((v) => ({
       nombre: linea(t(v.texto)), imagen: v.img,
-      elegir: () => { sumar(v.ef); anotar('La vida a bordo', linea(t(v.texto))); Sonido.tocar(v.snd, () => ir('grupo')); },
+      elegir: () => { sumar(v.ef); anotar('La vida a bordo', linea(t(v.texto))); Sonido.efecto(v.snd, () => ir('grupo')); },
     })))));
 };
 
@@ -603,7 +682,7 @@ ESCENAS.grupo = () => {
 };
 
 ESCENAS.decisiones = () => {
-  Sonido.tocar('vivappl1');
+  Sonido.ambiente('amb_oficina');
   const op = (k, imagenHover, ef, siguiente) => ({ texto: t(k), imagen: imagenHover, elegir: () => { sumar(ef); anotar('Las decisiones se toman', t(k)); ir(siguiente); } });
   decision({
     etiqueta: 'Preparación · La tripulación', pregunta: t('Dec1-1'), img: 'lider_reunion',
@@ -670,7 +749,7 @@ ESCENAS.responsabilidades = () => {
 };
 
 ESCENAS.lider = () => {
-  Sonido.tocar('pickup');
+  Sonido.ambiente('amb_oficina');
   const conLider = (ef, valor, k) => ({ texto: t(k), elegir: () => { sumar(ef); S.leader = valor; anotar('El líder', t(k)); ir('liderComo'); } });
   decision({
     etiqueta: 'Preparación · La tripulación', pregunta: t('Dec2-1'), img: 'lider_reunion',
@@ -681,7 +760,7 @@ ESCENAS.lider = () => {
         S.idea += 3;
         S.leader = 'no';
         anotar('El líder', linea(t('Dec2-2')));
-        Sonido.tocar('riattacc');
+        Sonido.ui('aviso');
         S.elia = 1; // Dec 6
         S.scelta += 1;
         aviso('La tripulación navegará sin líder');
@@ -712,7 +791,7 @@ ESCENAS.liderComo = () => {
 
 // ============================================================ Botadura
 ESCENAS.reintentar = () => {
-  Sonido.tocar('wrngansr');
+  Sonido.ui('error');
   const barcoGrande = S.barca > S.rotta;
   relato({
     etiqueta: 'Botadura', titulo: 'El barco y la ruta no encajan',
@@ -728,9 +807,9 @@ ESCENAS.reintentar = () => {
 };
 
 ESCENAS.botadura = () => {
-  Sonido.tocar('pan21');
+  Sonido.ambiente('amb_puerto');
   const [felicidades, ...resto] = t('Scelta2-1').split('\n');
-  const v = ventana('botella');
+  const v = ventana('botadura');
   const campo = h('input', { id: 'nombre-barco', type: 'text', maxlength: '40', autocomplete: 'off', placeholder: 'Nombre del barco', value: S.nombre });
   const botar = h('button', { class: 'boton', type: 'button', disabled: !S.nombre || null }, '¡Botar el barco!', flecha());
   campo.addEventListener('input', () => { botar.disabled = !campo.value.trim(); });
@@ -739,8 +818,9 @@ ESCENAS.botadura = () => {
     botar.disabled = true;
     campo.disabled = true;
     S.nombre = campo.value.trim();
-    Sonido.tocar('crasha2');
-    v.classList.add('brindis');
+    Sonido.efecto('ef_bocina');
+    Sonido.ui('exito');
+    v.classList.add('zarpar');
     luego(() => {
       // SceltaCal 1: puntos según el orden en que se prepararon barco, ruta, tripulación y bodega
       const [p1, p2] = S.lScelta;
@@ -770,7 +850,7 @@ const alFinal = () => ir('velas');
 
 const EVENTOS = {
   confusion: {
-    titulo: 'Confusión a bordo', img: 'ev_confus', snd: 'pan2', intro: 'Confus1-1',
+    titulo: 'Confusión a bordo', img: 'ev_confus', amb: 'amb_multitud', intro: 'Confus1-1',
     opciones: () => (S.leader === 'si'
       ? [['Confus2-1', { idea: 1 }], ['Confus2-2', { idea: 3, carico: 3 }], ['Confus2-3', { effi: 3 }]]
       : [['Confus2-4', { effi: 3, idea: -3 }], ['Confus2-5', { effi: 2, idea: 2 }],
@@ -778,42 +858,42 @@ const EVENTOS = {
     despues: () => eventoRuta(true),
   },
   ingresos: {
-    titulo: 'Las ganancias no llegan', img: 'grafico', intro: 'Inso1-1',
+    titulo: 'Las ganancias no llegan', img: 'grafico', amb: 'amb_oficina', intro: 'Inso1-1',
     opciones: () => [['Inso2-1', { effi: 2 }], ['Inso2-2', { effi: 3, carico: 3 }], ['Inso2-3', { carico: 3, crea: 3 }], ['Inso2-4', { idea: 2, carico: 1 }]],
     despues: () => eventoRuta(true),
   },
   crisis: {
-    titulo: 'Momento de crisis', img: 'ev_crisi', snd: 'thunderc', intro: 'Crisi1-1',
+    titulo: 'Momento de crisis', img: 'ev_crisi', amb: 'amb_tension', intro: 'Crisi1-1',
     opciones: () => [['Crisi2-1', { effi: 3, idea: 3 }], ['Crisi2-2', { effi: 3, carico: 3 }]],
     despues: () => eventoRuta(false),
   },
   saturacion: {
-    titulo: 'Una ruta muy transitada', img: 'ev_affoll', snd: 'pan3', intro: 'Affoll1-1',
+    titulo: 'Una ruta muy transitada', img: 'ev_affoll', amb: 'amb_puerto', ef: 'ef_bocina', intro: 'Affoll1-1',
     opciones: () => [['Affoll2-1', { effi: 1 }], ['Affoll2-2', { effi: 3 }], ['Affoll2-3', { effi: 2 }], ['Affoll2-4', { effi: 2, idea: 2 }], ['Affoll2-5', { crea: -2, errore: 1 }]],
     despues: () => (S.random === 2 ? alFinal() : ir('evento', 'tormenta')),
   },
   tormenta: {
-    titulo: 'La tempestad', img: 'ev_tempor', snd: 'thunderc', intro: 'tempor1-1',
+    titulo: 'La tempestad', img: 'ev_tempor', amb: 'amb_tormenta', ef: 'ef_trueno', intro: 'tempor1-1',
     opciones: () => [['tempor2-1', { effi: 1 }], ['tempor2-2', { crea: -2, effi: -2 }], ['tempor2-3', { effi: 2 }]],
     despues: () => (S.random === 1 ? alFinal() : ir('evento', 'saturacion')),
   },
   piratas: {
-    titulo: 'Una propuesta tentadora', img: 'ev_pirati', snd: 'pan8', intro: 'Pirati1-1',
+    titulo: 'Una propuesta tentadora', img: 'ev_pirati', amb: 'amb_olas', ef: 'ef_gaviotas', intro: 'Pirati1-1',
     opciones: () => [['Pirati2-1', { effi: 2 }], ['Pirati2-2', { idea: 1 }], ['Pirati2-3', { effi: 2, crea: 2, idea: -1 }]],
     despues: () => (S.random === 2 ? alFinal() : ir('evento', 'naufragos')),
   },
   naufragos: {
-    titulo: 'Náufragos a la vista', img: 'ev_naufra', snd: 'risacca', intro: 'Naufra1-1',
+    titulo: 'Náufragos a la vista', img: 'ev_naufra', amb: 'amb_olas', intro: 'Naufra1-1',
     opciones: () => [['Naufra2-1', { carico: 2, effi: -1, idea: 3 }], ['Naufra2-2', { effi: 2, idea: 1 }], ['Naufra2-3', { effi: 3 }]],
     despues: () => (S.random === 2 ? ir('evento', 'piratas') : alFinal()),
   },
   competencia: {
-    titulo: 'Un competidor gigante', img: 'ev_conc3', snd: 'pan4', intro: 'Conc31-1',
+    titulo: 'Un competidor gigante', img: 'ev_conc3', amb: 'amb_puerto', ef: 'ef_bocina', intro: 'Conc31-1',
     opciones: () => [['Conc32-1', { effi: 3, idea: -2 }], ['Conc32-2', { effi: 3, idea: -3 }], ['Conc32-3', { carico: 3 }]],
     despues: () => (S.random === 2 ? alFinal() : ir('evento', 'isla')),
   },
   isla: {
-    titulo: 'La isla', img: 'ev_isola', snd: 'tamburi', intro: 'Isola1-1',
+    titulo: 'La isla', img: 'ev_isola', amb: 'amb_tambores', intro: 'Isola1-1',
     // Nota: en el original la 3.ª opción aplicaba por error la puntuación de la 1.ª; aquí usa la suya (IsolaCal 3).
     opciones: () => [['Isola2-1', { effi: 2, idea: -1 }], ['Isola2-2', { idea: -2, effi: 3 }], ['Isola2-3', { idea: 2 }]],
     despues: () => (S.random === 2 ? ir('evento', 'competencia') : alFinal()),
@@ -822,7 +902,10 @@ const EVENTOS = {
 
 ESCENAS.evento = (id) => {
   const e = EVENTOS[id];
-  if (e.snd) Sonido.tocar(e.snd);
+  Sonido.detener(); // corta el efecto del evento anterior (p. ej. el trueno)
+  Sonido.detener(); // corta el efecto del evento anterior (p. ej. el trueno)
+  Sonido.ambiente(e.amb);
+  if (e.ef) Sonido.efecto(e.ef); else Sonido.ui('aviso');
   decision({
     etiqueta: 'Travesía', pregunta: e.titulo, contexto: linea(t(e.intro)), nota: '¿Qué decidimos?',
     img: e.img, vent: e.vent,
@@ -876,7 +959,9 @@ function indicador(nombre, color, valor, texto, visible) {
 }
 
 ESCENAS.velas = () => {
-  Sonido.tocar('martell');
+  Sonido.ambiente('amb_olas');
+  Sonido.efecto('ef_campana');
+  luego(() => Sonido.ui('exito'), 600);
   const v = calcularViaje();
   anotar('Velas ganadas', `Pragmatismo ${v.pE} % · Coherencia ${v.pI} % · Creatividad ${S.crea} puntos`);
   teclas = { Enter: () => ir('despedida') };
@@ -896,7 +981,8 @@ ESCENAS.velas = () => {
 };
 
 ESCENAS.despedida = () => {
-  Sonido.tocar('applausi');
+  Sonido.ambiente('musica');
+  Sonido.efecto('ef_aplausos');
   const otraVez = () => { Sonido.click(); S = nuevoEstado(); borrarPartida(); ir('prima'); };
   teclas = { Enter: otraVez };
   montar(lienzoSolo(
@@ -968,6 +1054,8 @@ function abrirCreditos() {
       h('p', { class: 'nota' }, 'Basado en el juego TeamWork (1998), de Claps Soc. Coop. (Pordenone, Italia).'),
       h('p', null, h('strong', null, 'Fotografías de Unsplash')),
       h('p', { class: 'nota' }, autores.join(' · ')),
+      h('p', null, h('strong', null, 'Sonidos de Freesound (dominio público, CC0)')),
+      h('p', { class: 'nota' }, [...new Set(CREDITOS_SONIDOS.map((c) => c.autor))].sort((a, b) => a.localeCompare(b, 'es')).join(' · ')),
       h('p', { class: 'nota' }, 'Fuente Outfit (SIL Open Font License).')),
     h('div', { class: 'botonera' }, h('button', { class: 'boton', type: 'button', onclick: cerrarModal }, 'Cerrar')),
   ]);
@@ -986,7 +1074,7 @@ function abrirSalir() {
 
 function salirApp() {
   if (!SIN_BARRA.has(S.escena)) guardar();
-  Sonido.tocar('pan8');
+  Sonido.ambiente(null);
   setTimeout(() => {
     window.close();
     setTimeout(() => { cerrarModal(); aviso('Ya puedes cerrar esta ventana.'); }, 300);

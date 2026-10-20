@@ -177,8 +177,8 @@ const CREDITOS_FOTOS = [
   "fuente": "Unsplash"
  },
  {
-  "imagen": "botella",
-  "autor": "Marco Palumbo",
+  "imagen": "botadura",
+  "autor": "Hector John Periquin",
   "fuente": "Unsplash"
  },
  {

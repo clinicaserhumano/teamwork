@@ -10,7 +10,7 @@ const CAND = path.join(RAIZ, 'extraido', 'fotos_candidatas');
 const DST = path.join(RAIZ, 'remake', 'app', 'assets', 'fotos');
 fs.mkdirSync(DST, { recursive: true });
 
-// Foto elegida (número de candidata) para cada imagen del juego
+// Foto elegida para cada imagen del juego: número de candidata, o [búsqueda, número] para usar una candidata de otra búsqueda
 const ELEGIDAS = {
   barco_grande: 3, eleccion_ruta: 3,
   prima_fortuna: 1, prima_novedad: 1, prima_aventura: 2, prima_justicia: 1, prima_ideal: 2, prima_felicidad: 3, prima_cambiar: 3,
@@ -21,7 +21,7 @@ const ELEGIDAS = {
   tripulacion_1: 3, tripulacion_2: 2, tripulacion_3: 1, tripulacion_4: 4, tripulacion_5: 1,
   lider_reunion: 2, lider_circulo: 3,
   decide_todos: 4, decide_uno: 2, decide_grupo: 2, decide_cada: 2, decide_niveles: 4,
-  botella: 2, grafico: 1,
+  botadura: ['barco_grande', 2], grafico: 1,
   ev_affoll: 3, ev_tempor: 4, ev_pirati: 4, ev_naufra: 3, ev_conc3: 2, ev_isola: 2, ev_confus: 3, ev_crisi: 1,
 };
 
@@ -31,10 +31,11 @@ try { claves = JSON.parse(fs.readFileSync(path.join(__dirname, 'claves.json'), '
 
 (async () => {
   const creditos = [];
-  for (const [id, n] of Object.entries(ELEGIDAS)) {
-    const c = candidatas[id].candidatas[n - 1];
+  for (const [id, eleccion] of Object.entries(ELEGIDAS)) {
+    const [origen, n] = Array.isArray(eleccion) ? eleccion : [id, eleccion];
+    const c = candidatas[origen].candidatas[n - 1];
     // Lado mayor 1400 px, JPEG de calidad alta
-    execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', path.join(CAND, id, `${n}.jpg`),
+    execFileSync('ffmpeg', ['-v', 'error', '-y', '-i', path.join(CAND, origen, `${n}.jpg`),
       '-vf', "scale='if(gt(iw,ih),min(1400,iw),-2)':'if(gt(iw,ih),-2,min(1400,ih))'", '-q:v', '4', path.join(DST, `${id}.jpg`)]);
     creditos.push({ imagen: id, autor: c.autor, perfil: c.perfil, foto: c.pagina, fuente: c.fuente });
     // Las normas de la API de Unsplash piden notificar cada descarga usada

@@ -1,0 +1,27 @@
+{
+  "_nota": "Sonido del juego -> búsqueda en Freesound (solo licencia CC0). dur = duración aceptable del original en segundos; recorte = segundos que se conservan; bucle = se reproduce en bucle como ambiente.",
+  "sonidos": [
+    { "id": "amb_olas", "busqueda": "ocean waves", "dur": [30, 400], "recorte": 45, "bucle": true },
+    { "id": "amb_puerto", "busqueda": "harbor ambience", "dur": [30, 400], "recorte": 45, "bucle": true },
+    { "id": "amb_viento", "busqueda": "wind ambience", "dur": [30, 400], "recorte": 45, "bucle": true },
+    { "id": "amb_tormenta", "busqueda": "thunderstorm rain", "dur": [30, 400], "recorte": 45, "bucle": true },
+    { "id": "amb_tambores", "busqueda": "djembe", "dur": [8, 200], "recorte": 30, "bucle": true },
+    { "id": "amb_multitud", "busqueda": "crowd murmur indoor", "dur": [20, 400], "recorte": 40, "bucle": true },
+    { "id": "amb_oficina", "busqueda": "office ambience", "dur": [20, 400], "recorte": 40, "bucle": true },
+    { "id": "amb_tension", "busqueda": "dark ambient drone", "dur": [20, 400], "recorte": 40, "bucle": true },
+    { "id": "musica", "busqueda": "calm piano", "dur": [30, 300], "recorte": 90, "bucle": true },
+
+    { "id": "ef_gaviotas", "busqueda": "seagulls", "dur": [2, 30], "recorte": 8 },
+    { "id": "ef_lobo", "busqueda": "wolf howl", "dur": [2, 30], "recorte": 7 },
+    { "id": "ef_deporte", "busqueda": "crowd cheering", "dur": [2, 30], "recorte": 6 },
+    { "id": "ef_militar", "busqueda": "military snare drum march", "dur": [2, 40], "recorte": 6 },
+    { "id": "ef_amigos", "busqueda": "group laughter people", "dur": [2, 30], "recorte": 6 },
+    { "id": "ef_familia", "busqueda": "children laughing", "dur": [2, 30], "recorte": 6 },
+    { "id": "ef_aplausos", "busqueda": "applause", "dur": [3, 40], "recorte": 8 },
+    { "id": "ef_campana", "busqueda": "ship bell", "dur": [1, 20], "recorte": 6 },
+    { "id": "ef_bocina", "busqueda": "ship horn", "dur": [1, 20], "recorte": 6 },
+    { "id": "ef_chapuzon", "busqueda": "water splash", "dur": [0.5, 10], "recorte": 4 },
+    { "id": "ef_cajas", "busqueda": "wooden box drop", "dur": [0.3, 6], "recorte": 3 },
+    { "id": "ef_trueno", "busqueda": "thunder clap", "dur": [2, 20], "recorte": 8 }
+  ]
+}

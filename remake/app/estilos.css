@@ -491,3 +491,18 @@ body.tactil .opcion:hover, body.tactil .tarjeta:hover { transform: none; }
   .matriz th, .matriz td { padding: 4px 10px; font-size: 13px; }
   .fondo { height: 18vh; }
 }
+
+/* Créditos: autor de la remasterización */
+.creditos-lista .autor { display: grid; gap: 4px; justify-items: start; padding: 12px 14px; border-radius: 14px; background: rgba(252, 107, 18, 0.1); border: 1px solid rgba(252, 107, 18, 0.35); }
+.creditos-lista .autor strong { font-size: 18px; color: var(--arena); }
+.creditos-lista .autor .boton { margin-top: 6px; padding: 8px 16px; font-size: 14px; text-decoration: none; }
+.caja { max-height: calc(100vh - 24px); overflow: auto; }
+@media (max-height: 560px) {
+  .modal { padding: 10px; }
+  .caja { padding: 14px 20px; gap: 10px; }
+  .caja h2 { font-size: 20px; }
+  .creditos-lista { max-height: calc(100vh - 150px); gap: 6px; }
+  .creditos-lista .autor { padding: 8px 12px; }
+  .creditos-lista .autor strong { font-size: 16px; }
+  .caja .botonera .boton { padding: 8px 18px; }
+}

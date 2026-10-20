@@ -12,7 +12,14 @@ const MARCA = {
   contacto: [],
 };
 
-const BARRA = {
+// Autor de la versión remasterizada (aparece en Créditos)
+const AUTOR = {
+  nombre: 'Jorge Urgilés Ruiz',
+  cargo: 'Ingeniero en Software',
+  web: 'https://jorge-urgiles-ruiz.vercel.app',
+};
+
+const BARRA ={
   "prima": "Escoge tres objetivos",
   "continuar": "Haz clic para continuar",
   "salir": "Salir",

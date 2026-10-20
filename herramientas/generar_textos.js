@@ -70,6 +70,13 @@ const MARCA = {
   contacto: [],
 };
 
+// Autor de la versión remasterizada (aparece en Créditos)
+const AUTOR = {
+  nombre: 'Jorge Urgilés Ruiz',
+  cargo: 'Ingeniero en Software',
+  web: 'https://jorge-urgiles-ruiz.vercel.app',
+};
+
 const BARRA = ${JSON.stringify(barra, null, 2)};
 
 const T = ${JSON.stringify(T, null, 2)};

@@ -1,3 +1,9 @@
+# Créditos
+
+Remasterización y desarrollo: **Jorge Urgilés Ruiz**, Ingeniero en Software — [jorge-urgiles-ruiz.vercel.app](https://jorge-urgiles-ruiz.vercel.app)
+
+Basado en el juego TeamWork (1998), de Claps Soc. Coop. (Pordenone, Italia).
+
 # Créditos de las fotografías
 
 Fotografías de [Unsplash](https://unsplash.com/?utm_source=teamwork&utm_medium=referral), usadas bajo la [licencia de Unsplash](https://unsplash.com/license).

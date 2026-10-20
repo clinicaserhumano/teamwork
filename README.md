@@ -2,6 +2,8 @@
 
 Juego sobre trabajo en equipo, remasterizado a partir del original **TeamWork** (Macromedia Director 6, 1998).
 
+Remasterización y desarrollo: **Jorge Urgilés Ruiz**, Ingeniero en Software — [jorge-urgiles-ruiz.vercel.app](https://jorge-urgiles-ruiz.vercel.app).
+
 | Carpeta | Contenido |
 |---|---|
 | `remake/` | Juego nuevo (HTML5 + Electron). Ver [remake/LEAME.md](remake/LEAME.md) |

@@ -411,6 +411,7 @@ img { max-width: 100%; display: block; }
   .huecos, .niveles { grid-template-columns: minmax(0, 1fr); }
   .motivos { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .barra { grid-template-columns: auto auto; }
+  .acciones { justify-self: end; }
   .etapas { display: none; }
   .escena { align-items: flex-start; }
 }
@@ -442,3 +443,51 @@ img { max-width: 100%; display: block; }
 .enlace { background: none; border: 0; padding: 0; color: var(--dorado); cursor: pointer; text-decoration: underline; font-size: inherit; }
 .creditos-lista { display: grid; gap: 8px; max-height: 55vh; overflow: auto; }
 .creditos-lista p { margin: 0; }
+
+/* ---------- Móvil / app de Android ---------- */
+body.nativo #btn-pantalla, body.nativo .imprimir { display: none; }
+body.tactil .opcion.previa, body.tactil .tarjeta.previa { border-color: var(--naranja); background: rgba(33, 70, 107, 0.9); }
+body.tactil .opcion.previa .num { background: var(--naranja); color: #fff; }
+body.tactil .pizarra:not(:empty)::after { content: "Toca otra vez para elegir"; display: block; margin-top: 8px; font-size: 13px; color: var(--dorado); font-style: normal; }
+body.tactil .opcion:hover, body.tactil .tarjeta:hover { transform: none; }
+
+/* Móviles en horizontal: poca altura, todo más compacto */
+@media (max-height: 560px) {
+  body { font-size: 15px; overflow: auto; }
+  .barra { padding: 6px 14px; gap: 12px; }
+  .marca img { height: 28px; }
+  .marca-texto strong { font-size: 16px; }
+  .marca-texto span, .etapas li span { display: none; }
+  .etapas li { padding: 4px; }
+  .icono { width: 36px; height: 36px; }
+  .escena { padding: 12px 18px 16px; }
+  .lienzo { gap: 18px; grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); }
+  .ventana { aspect-ratio: auto; height: min(70vh, 300px); }
+  .panel { gap: 10px; }
+  .pregunta { font-size: clamp(19px, 3.6vh, 26px); }
+  .contexto { font-size: 15px; }
+  .nota { font-size: 13px; }
+  .opcion { padding: 8px 12px; grid-template-columns: 30px 1fr; gap: 10px; }
+  .opcion .num { width: 28px; height: 28px; font-size: 13px; }
+  .opcion .txt { font-size: 14.5px; }
+  .opciones { gap: 7px; }
+  .pizarra { min-height: 0; padding: 10px 14px; font-size: 14px; }
+  .tarjetas { grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+  .tarjeta { min-height: 0; padding: 8px 8px 10px; gap: 8px; }
+  .tarjeta .nombre { font-size: 14px; }
+  .motivo { min-height: 0; }
+  .motivo .nombre { font-size: 14px; }
+  .huecos { gap: 8px; }
+  .hueco { min-height: 46px; padding: 6px 10px; }
+  .boton { padding: 10px 20px; font-size: 15px; }
+  .portada { gap: 10px; }
+  .portada .logo { height: 24vh; }
+  .portada h1 { font-size: clamp(40px, 12vh, 72px); }
+  .portada .lema { font-size: 16px; }
+  .resultado { gap: 18px; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); }
+  .velero { max-height: 70vh; }
+  .indicador { gap: 6px 10px; }
+  .millas { font-size: 17px; }
+  .matriz th, .matriz td { padding: 4px 10px; font-size: 13px; }
+  .fondo { height: 18vh; }
+}

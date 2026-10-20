@@ -36,10 +36,31 @@ npm run empaquetar
 
 El resultado queda en `dist/TeamWork-win32-x64/`. Para distribuirlo hay que copiar **la carpeta completa**, no solo el `.exe`.
 
+## App de Android (APK)
+
+La misma aplicación se empaqueta para Android con [Capacitor](https://capacitorjs.com) (proyecto en `android/`, configuración en `capacitor.config.json`). Funciona solo en horizontal y a pantalla completa; en pantallas táctiles las opciones con descripción se eligen con dos toques (el primero muestra la descripción).
+
+```
+npm run apk
+```
+
+Copia los cambios de `app/` al proyecto Android, compila y deja la APK en `dist/TeamWork.apk`.
+
+Requisitos (ya instalados en este equipo, sin Android Studio):
+- Java 21 en `C:\Android\jdk-21` ([Microsoft OpenJDK 21](https://aka.ms/download-jdk/microsoft-jdk-21-windows-x64.zip), descomprimido).
+- SDK de Android en `C:\Android\Sdk`: [herramientas de línea de comandos](https://developer.android.com/studio#command-line-tools-only) en `cmdline-tools\latest`, y luego `sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"`.
+- Si Java da errores de certificado (antivirus o red que inspecciona HTTPS), ya está configurado para usar los certificados de Windows.
+
+**Instalar en un móvil:** copiar `TeamWork.apk` al teléfono y abrirlo; Android pedirá permitir "instalar apps de origen desconocido". Esta APK es de tipo *debug*: sirve para instalar directamente, pero para publicarla en Google Play hay que generar una versión firmada (`release`) con una clave propia de la clínica.
+
+Ícono y pantalla de arranque: se generan desde `resources/` (creados con `../herramientas/iconos_android.js`) con `npx @capacitor/assets generate --android`.
+
 ## Pruebas
 
 - `npm run probar` — juega 20 partidas al azar y comprueba que todas terminan sin errores.
-- `npm run capturas -- <carpeta>` — guarda una captura de cada pantalla.
+- `npm run capturas -- <carpeta> [ancho] [alto]` — guarda una captura de cada pantalla (p. ej. `800 360` simula un móvil en horizontal).
+- `npx electron pruebas/audio.js` — comprueba que cada escena reproduce su sonido.
+- `npx electron pruebas/tactil.js` — comprueba el modo táctil (dos toques).
 
 (Si se ejecutan desde la terminal de VS Code, antes hay que quitar la variable `ELECTRON_RUN_AS_NODE`.)
 

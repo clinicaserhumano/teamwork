@@ -26,6 +26,10 @@ function s(tag, attrs = {}, ...hijos) {
   for (const c of hijos.flat()) if (c != null) el.append(c);
   return el;
 }
+// Plataforma: app de Android (Capacitor) y pantalla táctil sin ratón
+const NATIVO = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+const TACTIL = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+
 // Fotos (assets/fotos/*.jpg, ver CREDITOS.md) o gráficos de la marca (assets/img/csh_*.png)
 const rutaImagen = (n) => (n.startsWith('csh_') ? `assets/img/${n}.png` : `assets/fotos/${n}.jpg`);
 const imagen = (nombre, alt = '', clase) => h('img', { src: rutaImagen(nombre), alt, class: clase, draggable: 'false' });
@@ -230,6 +234,18 @@ const lienzo = (izq, der) => h('div', { class: 'lienzo' }, izq, der);
 const lienzoSolo = (...hijos) => h('div', { class: 'lienzo solo' }, h('div', { class: 'panel' }, hijos));
 const cabecera = (etiqueta, pregunta) => [h('p', { class: 'etiqueta' }, etiqueta), h('h1', { class: 'pregunta' }, pregunta)];
 
+// En pantallas táctiles no hay "pasar el ratón": una opción con descripción se elige con dos toques
+// (el primero muestra la descripción, el segundo confirma).
+function dosToques(boton, contenedor, conDetalle, mostrar, elegir) {
+  return () => {
+    if (!TACTIL || !conDetalle || boton.classList.contains('previa')) return elegir();
+    contenedor.querySelectorAll('.previa').forEach((o) => o.classList.remove('previa'));
+    boton.classList.add('previa');
+    Sonido.click();
+    mostrar();
+  };
+}
+
 // Lista de opciones numeradas. Cada opción: { texto, detalle?, imagen?, elegir }
 function listaOpciones(items, { pizarra, vent, columnas = false } = {}) {
   let bloqueado = false;
@@ -238,7 +254,7 @@ function listaOpciones(items, { pizarra, vent, columnas = false } = {}) {
   items.forEach((it, i) => {
     const b = h('button', { class: 'opcion', type: 'button' }, h('span', { class: 'num' }, i + 1), h('span', { class: 'txt' }, it.texto));
     const mostrar = () => { if (pizarra && it.detalle) pizarra.textContent = it.detalle; if (vent && it.imagen) vent.cambiar(it.imagen); };
-    const ocultar = () => { if (pizarra) pizarra.textContent = ''; if (vent && it.imagen) vent.restaurar(); };
+    const ocultar = () => { if (TACTIL) return; if (pizarra) pizarra.textContent = ''; if (vent && it.imagen) vent.restaurar(); };
     b.addEventListener('mouseenter', mostrar); b.addEventListener('focus', mostrar);
     b.addEventListener('mouseleave', ocultar); b.addEventListener('blur', ocultar);
     const elegir = () => {
@@ -250,7 +266,7 @@ function listaOpciones(items, { pizarra, vent, columnas = false } = {}) {
       ol.querySelectorAll('.opcion').forEach((o) => { if (o !== b) o.disabled = true; });
       luego(it.elegir, 220);
     };
-    b.addEventListener('click', elegir);
+    b.addEventListener('click', dosToques(b, ol, !!(pizarra && it.detalle), mostrar, elegir));
     mapa[String(i + 1)] = elegir;
     ol.append(h('li', null, b));
   });
@@ -270,10 +286,11 @@ function rejillaTarjetas(items, { pizarra, clase = 'tarjetas' } = {}) {
       h('div', { class: 'imagen' }, imagen(it.imagen)),
       h('div', { class: 'nombre' }, it.nombre),
       it.pie && h('div', { class: 'detalle' }, it.pie));
-    if (pizarra && it.detalle) {
-      const mostrar = () => { pizarra.textContent = it.detalle; };
+    const conDetalle = !!(pizarra && it.detalle);
+    const mostrar = () => { if (conDetalle) pizarra.textContent = it.detalle; };
+    if (conDetalle) {
       b.addEventListener('mouseenter', mostrar); b.addEventListener('focus', mostrar);
-      b.addEventListener('mouseleave', () => { pizarra.textContent = ''; });
+      b.addEventListener('mouseleave', () => { if (!TACTIL) pizarra.textContent = ''; });
     }
     if (!it.hecha) {
       const elegir = () => {
@@ -283,7 +300,7 @@ function rejillaTarjetas(items, { pizarra, clase = 'tarjetas' } = {}) {
         b.classList.add('elegida');
         luego(it.elegir, 220);
       };
-      b.addEventListener('click', elegir);
+      b.addEventListener('click', dosToques(b, rej, conDetalle, mostrar, elegir));
       mapa[String(i + 1)] = elegir;
     }
     rej.append(b);
@@ -292,7 +309,8 @@ function rejillaTarjetas(items, { pizarra, clase = 'tarjetas' } = {}) {
   return rej;
 }
 
-const pizarra = (vacia = 'Pasa el ratón por encima de una opción para leer más.') => h('div', { class: 'pizarra', 'data-vacia': vacia, 'aria-live': 'polite' });
+const pizarra = (vacia = 'Pasa el ratón por encima de una opción para leer más.') => h('div', { class: 'pizarra', 'aria-live': 'polite',
+  'data-vacia': TACTIL ? 'Toca una opción para leer su descripción; tócala otra vez para elegirla.' : vacia });
 
 // Escena estándar: imagen a la izquierda, pregunta y opciones a la derecha
 function decision({ etiqueta, pregunta, contexto, nota, img, vent: opcVent, opciones, columnas, conPizarra, extra }) {
@@ -977,7 +995,7 @@ ESCENAS.velas = () => {
       h('p', { class: 'millas' }, 'Han permitido recorrer ', h('b', null, v.recorrido.toLocaleString('es')), ' millas, es decir, el ', h('b', null, `${v.viaje} %`), ' de tu objetivo.'),
       h('div', { class: 'botonera' },
         h('button', { class: 'boton', type: 'button', onclick: () => { Sonido.click(); ir('despedida'); } }, 'Continuar', flecha()),
-        h('button', { class: 'boton secundario', type: 'button', onclick: imprimirDiario }, BARRA.imprimir)))));
+        h('button', { class: 'boton secundario imprimir', type: 'button', onclick: imprimirDiario }, BARRA.imprimir)))));
 };
 
 ESCENAS.despedida = () => {
@@ -992,7 +1010,7 @@ ESCENAS.despedida = () => {
     MARCA.contacto.length > 0 && h('div', { class: 'pizarra' }, h('p', null, h('strong', null, capital(t('Indir2-2')))), MARCA.contacto.map((c) => h('div', null, c))),
     h('div', { class: 'botonera' },
       h('button', { class: 'boton', type: 'button', onclick: otraVez }, 'Jugar otra vez', flecha()),
-      h('button', { class: 'boton secundario', type: 'button', onclick: imprimirDiario }, BARRA.imprimir),
+      h('button', { class: 'boton secundario imprimir', type: 'button', onclick: imprimirDiario }, BARRA.imprimir),
       h('button', { class: 'boton secundario', type: 'button', onclick: () => { Sonido.click(); ir('portada'); } }, 'Volver al inicio'),
       h('button', { class: 'boton secundario', type: 'button', onclick: abrirCreditos }, 'Créditos'))));
 };
@@ -1076,6 +1094,7 @@ function salirApp() {
   if (!SIN_BARRA.has(S.escena)) guardar();
   Sonido.ambiente(null);
   setTimeout(() => {
+    if (NATIVO) { window.Capacitor.Plugins.App.exitApp(); return; } // app de Android
     window.close();
     setTimeout(() => { cerrarModal(); aviso('Ya puedes cerrar esta ventana.'); }, 300);
   }, 500);
@@ -1106,6 +1125,9 @@ function imprimirDiario() {
 }
 
 // ============================================================ Arranque
+// En la app de Android no hay impresora ni pantalla completa manual (la app ya ocupa toda la pantalla)
+document.body.classList.toggle('tactil', TACTIL);
+document.body.classList.toggle('nativo', NATIVO);
 $('#btn-sonido').addEventListener('click', () => Sonido.alternar());
 $('#btn-situacion').addEventListener('click', abrirSituacion);
 $('#btn-salir').addEventListener('click', abrirSalir);

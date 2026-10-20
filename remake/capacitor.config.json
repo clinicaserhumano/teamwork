@@ -1,0 +1,8 @@
+{
+  "appId": "com.clinicaserhumano.teamwork",
+  "appName": "TeamWork",
+  "webDir": "app",
+  "android": {
+    "backgroundColor": "#0b1a2b"
+  }
+}

@@ -506,3 +506,20 @@ body.tactil .opcion:hover, body.tactil .tarjeta:hover { transform: none; }
   .creditos-lista .autor strong { font-size: 16px; }
   .caja .botonera .boton { padding: 8px 18px; }
 }
+
+/* Móviles en horizontal: la regla de "pantalla estrecha" (max-width: 900px) apilaba las cajas de la
+   bodega y los huecos de la motivación a todo el ancho, con imágenes más altas que la pantalla. */
+@media (max-height: 560px) {
+  .niveles, .huecos { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .niveles .tarjeta .imagen { aspect-ratio: auto; height: clamp(60px, 22vh, 120px); }
+  .motivos { grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 8px; }
+  .motivo { padding: 6px 6px 8px; gap: 6px; }
+  .motivo .nombre { font-size: 12.5px; }
+  .hueco { min-height: 40px; gap: 8px; font-size: 13px; }
+  .hueco b { width: 26px; height: 26px; font-size: 12px; }
+  .hueco img { width: 30px; height: 30px; }
+}
+@media (max-height: 560px) {
+  .niveles .tarjeta { min-height: 0; }
+  .motivo .foto { aspect-ratio: 4 / 3; }
+}

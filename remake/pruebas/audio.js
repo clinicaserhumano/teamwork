@@ -5,7 +5,7 @@ const path = require('path');
 app.whenReady().then(async () => {
   const win = new BrowserWindow({ show: false, webPreferences: { contextIsolation: true, sandbox: true, backgroundThrottling: false, autoplayPolicy: 'no-user-gesture-required' } });
   await win.loadFile(path.join(__dirname, '..', 'app', 'index.html'));
-  await win.webContents.executeJavaScript('localStorage.setItem("teamwork.sonido","true"); location.reload(); true');
+  await win.webContents.executeJavaScript('localStorage.setItem("teamwork.idioma", JSON.stringify("es")); localStorage.setItem("teamwork.sonido","true"); location.reload(); true');
   await new Promise((r) => setTimeout(r, 800));
   const espera = (ms) => new Promise((r) => setTimeout(r, ms));
   for (const [escena, args] of [['portada', []], ['presentacion', []], ['eleccion', []], ['evento', ['tormenta']], ['evento', ['isla']], ['velas', []]]) {

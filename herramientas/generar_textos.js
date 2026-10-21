@@ -1,4 +1,6 @@
-// Genera remake/app/textos.js a partir de los textos en español del elenco TESTIES.CXT
+// HISTÓRICO: extrajo los textos en español del elenco TESTIES.CXT y aplicó las correcciones.
+// Ahora los textos viven en remake/app/idiomas/*.js (es, en, it, de, fr) y se editan a mano;
+// este script solo genera una copia de referencia en extraido/textos_es_original.js.
 'use strict';
 const fs = require('fs');
 const path = require('path');
@@ -81,5 +83,5 @@ const BARRA = ${JSON.stringify(barra, null, 2)};
 
 const T = ${JSON.stringify(T, null, 2)};
 `;
-fs.writeFileSync(path.join(__dirname, '..', 'remake', 'app', 'textos.js'), out);
+fs.writeFileSync(path.join(__dirname, '..', 'extraido', 'textos_es_original.js'), out);
 console.log('textos:', Object.keys(T).length);

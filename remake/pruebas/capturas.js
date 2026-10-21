@@ -55,7 +55,7 @@ app.whenReady().then(async () => {
   const errores = [];
   win.webContents.on('console-message', (e, nivel, msg, linea, fuente) => { if (nivel >= 2) errores.push(`${msg} (${path.basename(fuente || '')}:${linea})`); });
   await win.loadFile(path.join(__dirname, '..', 'app', 'index.html'));
-  await win.webContents.executeJavaScript('localStorage.setItem("teamwork.sonido","false"); location.reload(); true');
+  await win.webContents.executeJavaScript('localStorage.setItem("teamwork.idioma", JSON.stringify("es")); localStorage.setItem("teamwork.sonido","false"); location.reload(); true');
   await new Promise((r) => setTimeout(r, 800));
   for (const [nombre, js, espera = 900] of PASOS) {
     try { await win.webContents.executeJavaScript(`(()=>{ ${js}; return true; })()`); }

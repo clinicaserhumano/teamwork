@@ -1,7 +1,7 @@
 {
   "name": "teamwork-clinica-ser-humano",
   "productName": "TeamWork - Clinica Ser Humano",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "description": "TeamWork: juego sobre trabajo en equipo (versión remasterizada)",
   "main": "main.js",
   "private": true,

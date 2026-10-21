@@ -11,12 +11,25 @@ La lógica de puntuación y navegación se extrajo del juego original y se repro
 La partida se guarda sola; al volver a abrir el juego aparece **Continuar el viaje guardado**.
 Teclas: números `1`–`9` eligen opciones, `Intro` continúa, `Esc` sale, `F11` pantalla completa.
 
+## Idiomas
+
+El juego está en **español, inglés, italiano, alemán y francés**. La primera vez usa el idioma del dispositivo (o español si no es ninguno de esos); se cambia desde la portada o con el botón del globo de la barra superior, y la elección se recuerda.
+
+Cada idioma es un archivo en `app/idiomas/` (`es.js`, `en.js`, `it.js`, `de.js`, `fr.js`) con dos partes:
+- `T`: los textos del juego. Las claves son los nombres del juego original (p. ej. `Naufra1-1`).
+- `U`: los textos de la interfaz (botones, etapas, títulos de los eventos…). Algunos son funciones porque cambian con el número o la gramática (p. ej. `duracion(min, seg)`).
+
+Todas las traducciones parten de la versión española (la adaptada a trabajo en equipo); los textos italiano y alemán de 1998 trataban de cooperativismo y se conservan solo como referencia en `../extraido/recursos/TESTIITA` y `TESTIDE`.
+
+**Para añadir otro idioma:** copiar `es.js` con otro código (p. ej. `pt.js`), traducirlo, añadir su `<script>` en `app/index.html` y su código a `ORDEN_IDIOMAS` en `app/juego.js`. `node pruebas/idiomas.js` comprueba que no falte ningún texto.
+
 ## Cambiar textos o marca
 
 | Qué | Dónde |
 |---|---|
-| Nombre de la marca, lema, datos de contacto del final | objeto `MARCA` al principio de `app/textos.js` |
-| Cualquier texto del juego | objeto `T` en `app/textos.js` (las claves son los nombres del juego original, p. ej. `Naufra1-1`) |
+| Nombre de la marca y datos de contacto del final | objeto `MARCA` en `app/textos.js` |
+| Autor (nombre y web) | objeto `AUTOR` en `app/textos.js`; el cargo está traducido en `U.cargoAutor` de cada idioma |
+| Cualquier texto del juego o de la interfaz | `app/idiomas/<idioma>.js` (ver *Idiomas*) |
 | Colores y tipografía | variables al principio de `app/estilos.css` (marca: naranja `#FC6B12`, dorado `#F8BC08`; fuente Outfit incluida en `app/assets/fuentes`) |
 | Logos de Ser Humano | `app/assets/img/csh_*.png` (se generan desde `../docs/` con `../herramientas/preparar_imagenes.js`) |
 | Puntuaciones, escenas, orden del viaje | `app/juego.js` |
@@ -26,7 +39,6 @@ Teclas: números `1`–`9` eligen opciones, `Intro` continúa, `Esc` sale, `F11`
 | Sonidos de interfaz (clic, elegir, acierto, error) | se generan por código: objeto `SONIDOS_UI` en `app/juego.js` |
 | Ícono del programa | `app/assets/icono.ico` |
 
-> `app/textos.js` se generó con `../herramientas/generar_textos.js`. Si lo editas a mano, no vuelvas a ejecutar ese script o perderás los cambios.
 
 ## Volver a generar el .exe
 
@@ -61,6 +73,8 @@ Requisitos (ya instalados en este equipo, sin Android Studio):
 - `npm run capturas -- <carpeta> [ancho] [alto]` — guarda una captura de cada pantalla (p. ej. `800 360` simula un móvil en horizontal).
 - `npx electron pruebas/audio.js` — comprueba que cada escena reproduce su sonido.
 - `npx electron pruebas/tactil.js` — comprueba el modo táctil (dos toques).
+- `node pruebas/idiomas.js` — comprueba que los cinco idiomas tienen todos los textos.
+- `npx electron pruebas/idiomas_pantallas.js` — recorre las pantallas en cada idioma buscando errores o restos en español.
 
 (Si se ejecutan desde la terminal de VS Code, antes hay que quitar la variable `ELECTRON_RUN_AS_NODE`.)
 
@@ -69,7 +83,7 @@ Requisitos (ya instalados en este equipo, sin Android Studio):
 - Interfaz nueva (pantalla adaptable, alta resolución) con fotografías nuevas de Unsplash.
 - Sonidos nuevos: ambientes en bucle por escena y efectos de Freesound (CC0), más sonidos de interfaz sintetizados. Ya no se usa ningún sonido de 1998.
 - La botadura muestra un barco zarpando en lugar de una botella de champán.
-- Solo español; los textos en italiano y alemán siguen en `../extraido/recursos/TESTIITA` y `TESTIDE`.
+- Cinco idiomas (español, inglés, italiano, alemán y francés), con selector en la portada y en la barra superior.
 - Corregidos dos errores del original: elegir *Felicidad* como primer objetivo no sumaba puntos, y la 3.ª opción de *La isla* aplicaba la puntuación de la 1.ª.
 - Corregidas erratas de la traducción española (lista en `../herramientas/generar_textos.js`).
 - La partida se guarda automáticamente en lugar de pedir un archivo.

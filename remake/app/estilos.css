@@ -448,7 +448,7 @@ img { max-width: 100%; display: block; }
 body.nativo #btn-pantalla, body.nativo .imprimir { display: none; }
 body.tactil .opcion.previa, body.tactil .tarjeta.previa { border-color: var(--naranja); background: rgba(33, 70, 107, 0.9); }
 body.tactil .opcion.previa .num { background: var(--naranja); color: #fff; }
-body.tactil .pizarra:not(:empty)::after { content: "Toca otra vez para elegir"; display: block; margin-top: 8px; font-size: 13px; color: var(--dorado); font-style: normal; }
+body.tactil .pizarra:not(:empty)::after { content: attr(data-otra); display: block; margin-top: 8px; font-size: 13px; color: var(--dorado); font-style: normal; }
 body.tactil .opcion:hover, body.tactil .tarjeta:hover { transform: none; }
 
 /* Móviles en horizontal: poca altura, todo más compacto */
@@ -522,4 +522,27 @@ body.tactil .opcion:hover, body.tactil .tarjeta:hover { transform: none; }
 @media (max-height: 560px) {
   .niveles .tarjeta { min-height: 0; }
   .motivo .foto { aspect-ratio: 4 / 3; }
+}
+
+/* ---------- Selector de idioma ---------- */
+.idiomas { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.idioma {
+  padding: 6px 14px; border-radius: 999px; cursor: pointer; font-size: 14px; font-weight: 500;
+  background: transparent; color: var(--tenue); border: 1px solid var(--linea);
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+.idioma:hover { color: var(--texto); border-color: var(--linea-fuerte); }
+.idioma.activo { background: rgba(252, 107, 18, 0.15); color: var(--texto); border-color: var(--naranja); }
+.caja .idiomas { justify-content: flex-start; }
+.caja .idioma { font-size: 16px; padding: 10px 18px; }
+@media (max-height: 560px) {
+  .portada .idiomas { margin-top: 2px; }
+  .idioma { padding: 4px 10px; font-size: 12.5px; }
+}
+@media (max-height: 560px) {
+  .portada { gap: 6px; }
+  .portada .logo { height: 19vh; }
+  .portada h1 { font-size: clamp(36px, 11vh, 64px); }
+  .portada .botonera { margin-top: 2px; }
+  .portada .creditos { margin-top: 2px; }
 }

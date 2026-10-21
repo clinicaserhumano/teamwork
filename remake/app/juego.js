@@ -33,7 +33,44 @@ const TACTIL = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
 // Fotos (assets/fotos/*.jpg, ver CREDITOS.md) o gráficos de la marca (assets/img/csh_*.png)
 const rutaImagen = (n) => (n.startsWith('csh_') ? `assets/img/${n}.png` : `assets/fotos/${n}.jpg`);
 const imagen = (nombre, alt = '', clase) => h('img', { src: rutaImagen(nombre), alt, class: clase, draggable: 'false' });
-const t = (k) => (k in T ? T[k] : k);
+// ============================================================ Idiomas (app/idiomas/*.js)
+const ORDEN_IDIOMAS = ['es', 'en', 'it', 'de', 'fr'];
+let IDIOMA = 'es', T = {}, U = {};
+const t = (k) => (k in T ? T[k] : (IDIOMAS.es.T[k] ?? k));
+function idiomaInicial() {
+  const guardado = leerPref('idioma', null);
+  if (guardado && IDIOMAS[guardado]) return guardado;
+  const sistema = (navigator.language || 'es').slice(0, 2).toLowerCase();
+  return IDIOMAS[sistema] ? sistema : 'es';
+}
+function fijarIdioma(cod) {
+  IDIOMA = cod; T = IDIOMAS[cod].T; U = IDIOMAS[cod].U;
+  document.documentElement.lang = cod;
+  guardarPref('idioma', cod);
+  textosFijos();
+}
+// Textos del HTML (barra superior) que no se regeneran con cada escena
+function textosFijos() {
+  $('#subtitulo').textContent = U.subtitulo;
+  $('#etapas').setAttribute('aria-label', U.etapasAria);
+  for (const [id, texto] of [['#btn-situacion', U.situacion], ['#btn-pantalla', U.pantallaCompleta], ['#btn-salir', U.salir], ['#btn-idioma', U.idioma]]) {
+    $(id).title = texto; $(id).setAttribute('aria-label', texto);
+  }
+  pintarBotonSonido();
+}
+function selectorIdioma() {
+  return h('div', { class: 'idiomas', role: 'group', 'aria-label': U.idioma },
+    ORDEN_IDIOMAS.map((c) => h('button', { class: 'idioma' + (c === IDIOMA ? ' activo' : ''), type: 'button', lang: c, 'aria-pressed': String(c === IDIOMA),
+      onclick: () => { Sonido.click(); if (c !== IDIOMA) { fijarIdioma(c); cerrarModal(); ir(S.escena, ...(S.args || [])); } } }, IDIOMAS[c].nombre)));
+}
+function abrirIdiomas() {
+  Sonido.click();
+  abrirModal([h('h2', null, U.idioma), selectorIdioma(),
+    h('div', { class: 'botonera' }, h('button', { class: 'boton secundario', type: 'button', onclick: cerrarModal }, U.cerrar))]);
+}
+const loc = () => IDIOMAS[IDIOMA].locale;
+// Texto con partes destacadas: ['texto', [destacado], 'texto'] -> nodos
+const conDestacados = (partes) => partes.map((p) => (Array.isArray(p) ? h('b', null, p[0]) : p));
 const linea = (txt) => txt.replace(/\s*\n\s*/g, ' ');
 const capital = (txt) => txt.charAt(0).toUpperCase() + txt.slice(1);
 const parrafos = (txt) => txt.split(/\n{2,}/).map((p) => h('p', null, p.split('\n').flatMap((l, i) => (i ? [h('br'), l] : [l]))));
@@ -158,7 +195,7 @@ const Sonido = {
 function pintarBotonSonido() {
   const b = $('#btn-sonido');
   b.classList.toggle('apagado', !Sonido.activo);
-  b.title = Sonido.activo ? 'Silenciar' : 'Activar sonido';
+  b.title = Sonido.activo ? U.silenciar : U.activarSonido;
   b.setAttribute('aria-label', b.title);
 }
 
@@ -186,7 +223,6 @@ function anotar(tema, eleccion) {
 // ============================================================ Navegación entre escenas
 const ESCENAS = {};
 const SIN_BARRA = new Set(['portada', 'presentacion']);
-const ETAPAS = ['Motivación', 'Preparación', 'Botadura', 'Travesía', 'Llegada'];
 const ETAPA_DE = {
   intro: 0, prima: 0,
   eleccion: 1, barcos: 1, barco: 1, financiacion: 1, rutas: 1, ruta: 1, bodega: 1, bodegaNivel: 1, bodegaExceso: 1,
@@ -218,7 +254,7 @@ function actualizarBarra(id) {
   barra.hidden = SIN_BARRA.has(id);
   const actual = ETAPA_DE[id] ?? 0;
   const ol = $('#etapas');
-  ol.replaceChildren(...ETAPAS.map((n, i) => h('li', { class: i < actual ? 'hecha' : i === actual ? 'actual' : null, 'aria-current': i === actual ? 'step' : null }, h('span', null, n))));
+  ol.replaceChildren(...U.etapas.map((n, i) => h('li', { class: i < actual ? 'hecha' : i === actual ? 'actual' : null, 'aria-current': i === actual ? 'step' : null }, h('span', null, n))));
 }
 
 // ============================================================ Piezas de interfaz
@@ -232,6 +268,9 @@ function ventana(nombre, { clara = false, cubrir = true, pie = null } = {}) {
 }
 const lienzo = (izq, der) => h('div', { class: 'lienzo' }, izq, der);
 const lienzoSolo = (...hijos) => h('div', { class: 'lienzo solo' }, h('div', { class: 'panel' }, hijos));
+const etapa = (i, seccion) => (seccion ? `${U.etapas[i]} · ${seccion}` : U.etapas[i]);
+const SECCION = { barco: 'Scelta1-2', ruta: 'Scelta1-3', bodega: 'Scelta1-4', tripulacion: 'Scelta1-5' };
+const prep = (s) => etapa(1, t(SECCION[s]));
 const cabecera = (etiqueta, pregunta) => [h('p', { class: 'etiqueta' }, etiqueta), h('h1', { class: 'pregunta' }, pregunta)];
 
 // En pantallas táctiles no hay "pasar el ratón": una opción con descripción se elige con dos toques
@@ -309,8 +348,8 @@ function rejillaTarjetas(items, { pizarra, clase = 'tarjetas' } = {}) {
   return rej;
 }
 
-const pizarra = (vacia = 'Pasa el ratón por encima de una opción para leer más.') => h('div', { class: 'pizarra', 'aria-live': 'polite',
-  'data-vacia': TACTIL ? 'Toca una opción para leer su descripción; tócala otra vez para elegirla.' : vacia });
+const pizarra = (vacia) => h('div', { class: 'pizarra', 'aria-live': 'polite', 'data-otra': U.tocaOtraVez,
+  'data-vacia': TACTIL ? U.pizarraTactil : (vacia || U.pizarraRaton) });
 
 // Escena estándar: imagen a la izquierda, pregunta y opciones a la derecha
 function decision({ etiqueta, pregunta, contexto, nota, img, vent: opcVent, opciones, columnas, conPizarra, extra }) {
@@ -354,13 +393,14 @@ ESCENAS.portada = () => {
     imagen('csh_logo_blanco', MARCA.nombre, 'logo'),
     h('p', { class: 'presenta' }, t('Sigla-1')),
     h('h1', null, MARCA.producto),
-    h('p', { class: 'lema' }, MARCA.lema),
+    h('p', { class: 'lema' }, U.lema),
     h('div', { class: 'botonera' },
-      h('button', { class: 'boton', type: 'button', onclick: nuevo }, 'Nuevo viaje', flecha()),
-      puedeSeguir && h('button', { class: 'boton secundario', type: 'button', onclick: seguir }, 'Continuar el viaje guardado'),
-      h('button', { class: 'boton secundario', type: 'button', onclick: salirApp }, 'Salir')),
-    h('p', { class: 'creditos' }, 'Versión remasterizada del juego TeamWork (1998) · ',
-      h('button', { class: 'enlace', type: 'button', onclick: abrirCreditos }, 'Créditos'))));
+      h('button', { class: 'boton', type: 'button', onclick: nuevo }, U.nuevoViaje, flecha()),
+      puedeSeguir && h('button', { class: 'boton secundario', type: 'button', onclick: seguir }, U.continuarGuardado),
+      h('button', { class: 'boton secundario', type: 'button', onclick: salirApp }, U.salir)),
+    selectorIdioma(),
+    h('p', { class: 'creditos' }, U.versionRemaster + ' · ',
+      h('button', { class: 'enlace', type: 'button', onclick: abrirCreditos }, U.creditos))));
   teclas = { Enter: puedeSeguir ? seguir : nuevo };
 };
 
@@ -371,8 +411,8 @@ ESCENAS.presentacion = () => {
     h('div', { class: 'p1' }, imagen('csh_logo_blanco', MARCA.nombre)),
     h('div', { class: 'p2' }, t('Sigla-1')),
     h('div', { class: 'p3' }, MARCA.producto),
-    h('div', { class: 'p4' }, MARCA.lema),
-    h('div', { class: 'saltar' }, 'Haz clic o pulsa Intro para continuar')));
+    h('div', { class: 'p4' }, U.lema),
+    h('div', { class: 'saltar' }, U.saltar)));
   luego(seguir, 9000);
   teclas = { Enter: seguir, ' ': seguir };
 };
@@ -380,12 +420,12 @@ ESCENAS.presentacion = () => {
 ESCENAS.intro = (paso = 1) => {
   if (paso === 1) {
     Sonido.ambiente('amb_olas');
-    relato({ etiqueta: 'Antes de zarpar', titulo: linea(t('Intro1-1')), img: 'barco_grande', vent: { cubrir: true },
-      botones: [{ texto: 'Continuar', accion: () => ir('intro', 2) }] });
+    relato({ etiqueta: U.antesZarpar, titulo: linea(t('Intro1-1')), img: 'barco_grande', vent: { cubrir: true },
+      botones: [{ texto: U.continuar, accion: () => ir('intro', 2) }] });
   } else {
     const [txt, condicion] = t('Intro1-2').split(/\n\n/);
-    relato({ etiqueta: 'Antes de zarpar', titulo: linea(txt), texto: condicion, img: 'eleccion_ruta',
-      botones: [{ texto: 'Empezar el viaje', accion: () => ir('prima') }] });
+    relato({ etiqueta: U.antesZarpar, titulo: linea(txt), texto: condicion, img: 'eleccion_ruta',
+      botones: [{ texto: U.empezarViaje, accion: () => ir('prima') }] });
   }
 };
 
@@ -414,14 +454,14 @@ const PUNTOS_PRIMA = {
 ESCENAS.prima = () => {
   Sonido.ambiente('amb_olas');
   const elegidos = [];
-  const huecos = [0, 1, 2].map((i) => h('div', { class: 'hueco' }, h('b', null, i + 1 + 'º'), h('span', null, 'Sin elegir')));
+  const huecos = [0, 1, 2].map((i) => h('div', { class: 'hueco' }, h('b', null, i + 1 + 'º'), h('span', null, U.sinElegir)));
   const continuar = h('button', { class: 'boton', type: 'button', disabled: true, onclick: () => {
     Sonido.click();
     elegidos.slice(0, 2).forEach((m, i) => sumar(PUNTOS_PRIMA[m.clave][i]));
-    anotar('Un viaje en busca de', elegidos.map((m) => t(m.texto)).join(', '));
+    anotar(t('Prima-1').replace(/:\s*$/, ''), elegidos.map((m) => t(m.texto)).join(', '));
     ir('eleccion');
-  } }, 'Continuar', flecha());
-  const reiniciar = h('button', { class: 'boton secundario', type: 'button', disabled: true, onclick: () => { Sonido.click(); ir('prima'); } }, 'Volver a elegir');
+  } }, U.continuar, flecha());
+  const reiniciar = h('button', { class: 'boton secundario', type: 'button', disabled: true, onclick: () => { Sonido.click(); ir('prima'); } }, U.volverElegir);
 
   const tarjetas = MOTIVOS.map((m, i) => {
     const b = h('button', { class: 'motivo', type: 'button' }, h('div', { class: 'foto' }, imagen(m.foto)), h('div', { class: 'nombre' }, capital(t(m.texto))));
@@ -447,8 +487,8 @@ ESCENAS.prima = () => {
   teclas = Object.fromEntries(tarjetas.map((b, i) => [String(i + 1), () => b.click()]));
   teclas.Enter = () => { if (!continuar.disabled) continuar.click(); };
   montar(lienzoSolo(
-    cabecera('Motivación', t('Prima-1')),
-    h('p', { class: 'nota' }, BARRA.prima + ', en orden de importancia.'),
+    cabecera(etapa(0), t('Prima-1')),
+    h('p', { class: 'nota' }, U.escogeTres),
     h('div', { class: 'motivos' }, tarjetas),
     h('div', { class: 'huecos' }, huecos),
     h('div', { class: 'botonera' }, continuar, reiniciar)));
@@ -475,8 +515,8 @@ ESCENAS.eleccion = () => {
     };
   });
   montar(lienzoSolo(
-    cabecera('Preparación', t('Scelta1-1')),
-    h('p', { class: 'nota' }, 'Prepara el viaje empezando por lo que el equipo considera más importante: el orden en que completes cada parte también cuenta.'),
+    cabecera(etapa(1), t('Scelta1-1')),
+    h('p', { class: 'nota' }, U.notaEleccion),
     rejillaTarjetas(items)));
 };
 
@@ -492,7 +532,7 @@ ESCENAS.barcos = () => {
   Sonido.ambiente('amb_puerto');
   const piz = pizarra();
   montar(lienzoSolo(
-    cabecera('Preparación · El barco', t('Barche1-1')),
+    cabecera(prep('barco'), t('Barche1-1')),
     rejillaTarjetas([1, 2, 3, 4].map((n) => ({
       nombre: t(BARCOS[n].titulo), imagen: BARCOS[n].img, detalle: t(BARCOS[n].desc),
       elegir: () => ir('barco', n),
@@ -502,7 +542,7 @@ ESCENAS.barcos = () => {
 
 ESCENAS.barco = (n) => {
   const b = BARCOS[n];
-  const area = n === 4 ? h('textarea', { id: 'caracteristicas', maxlength: '300', placeholder: 'Por ejemplo: rápido, con espacio para todos, fácil de reparar…' }) : null;
+  const area = n === 4 ? h('textarea', { id: 'caracteristicas', maxlength: '300', placeholder: U.placeholderEspecial }) : null;
   if (area) area.value = S.caracteristicas;
   const elegir = () => {
     S.barca = n;
@@ -511,24 +551,24 @@ ESCENAS.barco = (n) => {
       S.caracteristicas = area.value.trim();
       if (S.caracteristicas) S.crea += 3; // BarcheCal 6
     }
-    anotar('Barco', linea(t(b.titulo)) + (n === 4 && S.caracteristicas ? ` (${S.caracteristicas})` : ''));
+    anotar(U.temas.barco, linea(t(b.titulo)) + (n === 4 && S.caracteristicas ? ` (${S.caracteristicas})` : ''));
     ir('financiacion');
   };
   teclas = { Enter: () => { if (document.activeElement !== area) { Sonido.click(); elegir(); } } };
   montar(lienzo(ventana(b.img), h('div', { class: 'panel' },
-    cabecera('Preparación · El barco', linea(t(b.titulo))),
-    h('div', { class: 'contexto' }, parrafos(n === 4 ? 'Un barco a la medida de vuestro equipo.' : t(b.desc))),
+    cabecera(prep('barco'), linea(t(b.titulo))),
+    h('div', { class: 'contexto' }, parrafos(n === 4 ? U.barcoEspecial : t(b.desc))),
     area && h('div', { class: 'campo' }, h('label', { for: 'caracteristicas' }, t(b.desc)), area),
     h('div', { class: 'botonera' },
       h('button', { class: 'boton', type: 'button', onclick: () => { Sonido.click(); elegir(); } }, t('Barche1-7'), flecha()),
-      h('button', { class: 'boton secundario', type: 'button', onclick: () => { Sonido.click(); ir('barcos'); } }, `${t('barche2-2')} opción`)))));
+      h('button', { class: 'boton secundario', type: 'button', onclick: () => { Sonido.click(); ir('barcos'); } }, U.otraOpcion)))));
 };
 
 ESCENAS.financiacion = () => {
   const auto = t('Barche3-2').replace(/:\s*$/, '');
-  const op = (texto, ef) => ({ texto, elegir: () => { sumar(ef); anotar('Financiación del barco', texto); ir('eleccion'); } });
+  const op = (texto, ef) => ({ texto, elegir: () => { sumar(ef); anotar(U.temas.financiacion, texto); ir('eleccion'); } });
   decision({
-    etiqueta: 'Preparación · El barco', pregunta: t('Barche3-1'), img: BARCOS[S.barca].img,
+    etiqueta: prep('barco'), pregunta: t('Barche3-1'), img: BARCOS[S.barca].img,
     opciones: [
       op(`${auto} ${t('Barche3-3')}`, { idea: 3 }),
       op(`${auto} ${t('Barche3-4')}`, { idea: 2 }),
@@ -551,7 +591,7 @@ ESCENAS.rutas = () => {
   Sonido.ambiente('amb_viento');
   const piz = pizarra();
   montar(lienzoSolo(
-    cabecera('Preparación · La ruta', t('Rotte1-1')),
+    cabecera(prep('ruta'), t('Rotte1-1')),
     rejillaTarjetas([1, 2, 3, 4].map((n) => ({
       nombre: t(RUTAS[n].titulo), imagen: RUTAS[n].img, detalle: t(RUTAS[n].desc),
       elegir: () => ir('ruta', n),
@@ -564,16 +604,16 @@ ESCENAS.ruta = (n) => {
   Sonido.ambiente(r.amb);
   if (r.ef) Sonido.efecto(r.ef);
   relato({
-    etiqueta: 'Preparación · La ruta', titulo: t(r.titulo), texto: t(r.desc), img: r.img,
+    etiqueta: prep('ruta'), titulo: t(r.titulo), texto: t(r.desc), img: r.img,
     botones: [
-      { texto: 'Elijo esta ruta', accion: () => {
+      { texto: U.elijoRuta, accion: () => {
         S.scelta += 1; // RotteCal
         S.rotta = n;
         if (n === 4) sumar({ crea: 2, idea: 2 });
-        anotar('Ruta', t(r.titulo));
+        anotar(U.temas.ruta, t(r.titulo));
         ir('eleccion');
       } },
-      { texto: `${t('barche2-2')} ruta`, accion: () => ir('rutas') },
+      { texto: U.otraRuta, accion: () => ir('rutas') },
     ],
   });
 };
@@ -585,18 +625,18 @@ const VALORES = {
   F: { nombre: 'Cambusa1-5', desc: 'Cambusa2-6', niveles: ['Cambusa3-1', 'Cambusa3-2', 'Cambusa3-3'], cal: [{ effi: 3, errore: 1 }, { idea: 2 }, { idea: 3 }], final: [{ idea: 6 }, { idea: 4 }, { idea: 2 }] },
 };
 const NIVELES = [
-  { nombre: 'Poca', img: 'bodega_poca', carga: 1, snd: 'nota1' },
-  { nombre: 'Bastante', img: 'bodega_media', carga: 2, snd: 'nota2' },
-  { nombre: 'Mucha', img: 'bodega_mucha', carga: 3, snd: 'nota3' },
+  { img: 'bodega_poca', carga: 1, snd: 'nota1' },
+  { img: 'bodega_media', carga: 2, snd: 'nota2' },
+  { img: 'bodega_mucha', carga: 3, snd: 'nota3' },
 ];
 const LIMITE_CARGA = 7;
 
 function medidorCarga() {
   const pct = clamp(S.carico / 10 * 100, 0, 100);
-  const cargados = Object.keys(S.lufNivel).map((k) => h('span', { class: 'chip' }, `${t(VALORES[k].nombre)}: ${NIVELES[S.lufNivel[k]].nombre.toLowerCase()}`));
+  const cargados = Object.keys(S.lufNivel).map((k) => h('span', { class: 'chip' }, `${t(VALORES[k].nombre)}: ${U.niveles[S.lufNivel[k]].toLowerCase()}`));
   return h('div', { class: 'medidor' },
-    h('div', { class: 'fila' }, h('span', null, 'Carga del barco'), h('span', null, `${S.carico} / ${LIMITE_CARGA}`)),
-    h('div', { class: 'barra-carga', role: 'img', 'aria-label': `Carga ${S.carico} de ${LIMITE_CARGA}` }, h('span', { style: `width:${pct}%` })),
+    h('div', { class: 'fila' }, h('span', null, U.cargaBarco), h('span', null, `${S.carico} / ${LIMITE_CARGA}`)),
+    h('div', { class: 'barra-carga', role: 'img', 'aria-label': U.cargaAria(S.carico, LIMITE_CARGA) }, h('span', { style: `width:${pct}%` })),
     cargados.length > 0 && h('div', { class: 'valores-cargados' }, cargados));
 }
 
@@ -618,9 +658,9 @@ ESCENAS.bodega = () => {
   Sonido.ambiente('amb_puerto');
   const quedan = ['L', 'U', 'F'].filter((k) => !S.luf[k]);
   decision({
-    etiqueta: 'Preparación · La bodega',
+    etiqueta: prep('bodega'),
     pregunta: `${t('Cambusa1-1')} ${t('Cambusa1-2')}`,
-    nota: rango === 0 ? 'Elige primero el valor que más importa al equipo.' : 'Ahora, el siguiente en importancia.',
+    nota: rango === 0 ? U.notaBodega1 : U.notaBodega2,
     img: 'eleccion_provisiones', conPizarra: true,
     opciones: quedan.map((k) => ({
       texto: t(VALORES[k].nombre), detalle: t(VALORES[k].desc),
@@ -632,11 +672,11 @@ ESCENAS.bodega = () => {
 
 ESCENAS.bodegaNivel = (k) => {
   const v = VALORES[k];
-  const piz = pizarra('Pasa el ratón por encima de cada caja para ver qué significa.');
+  const piz = pizarra(U.pizarraCaja);
   montar(lienzoSolo(
-    cabecera('Preparación · La bodega', `¿Cuánta ${t(v.nombre).toLowerCase()} cargamos?`),
+    cabecera(prep('bodega'), U.cuantoCargamos(t(v.nombre))),
     rejillaTarjetas(NIVELES.map((n, i) => ({
-      nombre: n.nombre, imagen: n.img, detalle: linea(t(v.niveles[i])), pie: `+${n.carga} de carga`,
+      nombre: U.niveles[i], imagen: n.img, detalle: linea(t(v.niveles[i])), pie: U.masCarga(n.carga),
       elegir: () => {
         Sonido.ui(n.snd);
         Sonido.efecto('ef_cajas');
@@ -658,13 +698,13 @@ function completarBodega() {
   S.scelta += 1;
   S.respaldo = null;
   const orden = ['L', 'U', 'F'].sort((a, b) => S.luf[a] - S.luf[b]).map((k) => t(VALORES[k].nombre));
-  anotar('Orden de los valores', orden.join(' › '));
+  anotar(U.temas.ordenValores, orden.join(' › '));
 }
 
 ESCENAS.bodegaExceso = () => {
   Sonido.ui('error');
   relato({
-    etiqueta: 'Preparación · La bodega', titulo: t('Cambusa6-1'), texto: `${t('Cambusa6-2')}\n\n${t('Cambusa6-3')}`,
+    etiqueta: prep('bodega'), titulo: t('Cambusa6-1'), texto: `${t('Cambusa6-2')}\n\n${t('Cambusa6-3')}`,
     img: 'bodega_mucha',
     botones: [
       { texto: t('Cambusa6-5'), accion: () => { completarBodega(); ir('eleccion'); } },
@@ -684,26 +724,26 @@ const VIDA = [
 
 ESCENAS.tripulacion = () => {
   montar(lienzoSolo(
-    cabecera('Preparación · La tripulación', t('Equipe1-1')),
+    cabecera(prep('tripulacion'), t('Equipe1-1')),
     rejillaTarjetas(VIDA.map((v) => ({
       nombre: linea(t(v.texto)), imagen: v.img,
-      elegir: () => { sumar(v.ef); anotar('La vida a bordo', linea(t(v.texto))); Sonido.efecto(v.snd, () => ir('grupo')); },
+      elegir: () => { sumar(v.ef); anotar(U.temas.vida, linea(t(v.texto))); Sonido.efecto(v.snd, () => ir('grupo')); },
     })))));
 };
 
 ESCENAS.grupo = () => {
-  const op = (k, ef) => ({ texto: t(k), elegir: () => { sumar(ef); anotar('El grupo', t(k)); ir('decisiones'); } });
+  const op = (k, ef) => ({ texto: t(k), elegir: () => { sumar(ef); anotar(U.temas.grupo, t(k)); ir('decisiones'); } });
   decision({
-    etiqueta: 'Preparación · La tripulación', pregunta: t('Equipe3-1'), img: 'eleccion_tripulacion',
+    etiqueta: prep('tripulacion'), pregunta: t('Equipe3-1'), img: 'eleccion_tripulacion',
     opciones: [op('Equipe3-2', { effi: 3 }), op('Equipe3-3', { effi: 3, crea: 2 }), op('Equipe3-4', { idea: 2 })],
   });
 };
 
 ESCENAS.decisiones = () => {
   Sonido.ambiente('amb_oficina');
-  const op = (k, imagenHover, ef, siguiente) => ({ texto: t(k), imagen: imagenHover, elegir: () => { sumar(ef); anotar('Las decisiones se toman', t(k)); ir(siguiente); } });
+  const op = (k, imagenHover, ef, siguiente) => ({ texto: t(k), imagen: imagenHover, elegir: () => { sumar(ef); anotar(U.temas.decisiones, t(k)); ir(siguiente); } });
   decision({
-    etiqueta: 'Preparación · La tripulación', pregunta: t('Dec1-1'), img: 'lider_reunion',
+    etiqueta: prep('tripulacion'), pregunta: t('Dec1-1'), img: 'lider_reunion',
     opciones: [
       op('Dec1-2', 'decide_todos', { idea: 3 }, 'lider'),
       op('Dec1-3', 'decide_uno', { effi: 3 }, 'lider'),
@@ -734,10 +774,10 @@ function affidoCal(n) {
 ESCENAS.responsabilidades = () => {
   const elegido = new Array(TAREAS.length).fill(-1);
   const contador = h('span', { class: 'nota' });
-  const confirmar = h('button', { class: 'boton', type: 'button', disabled: true }, 'Confirmar', flecha());
+  const confirmar = h('button', { class: 'boton', type: 'button', disabled: true }, U.confirmar, flecha());
   const refrescar = () => {
     const n = elegido.filter((x) => x >= 0).length;
-    contador.textContent = `${n} de ${TAREAS.length} tareas asignadas`;
+    contador.textContent = U.tareasAsignadas(n, TAREAS.length);
     confirmar.disabled = n < TAREAS.length;
   };
   const filas = TAREAS.map((k, r) => h('tr', null,
@@ -753,35 +793,35 @@ ESCENAS.responsabilidades = () => {
     if (S.somma[0] > 5) S.errore++; // AffidoCal 9
     if (S.somma[1] > 6) S.errore++;
     if (S.somma[2] > 3) S.errore++;
-    anotar('Responsabilidades', ORGANOS.map((o, i) => `${linea(t(o)).replace(' Director', '/Director')}: ${S.somma[i]}`).join(' · '));
+    anotar(U.temas.responsabilidades, ORGANOS.map((o, i) => `${linea(t(o))}: ${S.somma[i]}`).join(' · '));
     ir('lider');
   });
   refrescar();
   montar(lienzoSolo(
-    cabecera('Preparación · La tripulación', t('Affido-1')),
-    h('p', { class: 'nota' }, 'Para cada tarea, marca quién debe hacerse cargo.'),
+    cabecera(prep('tripulacion'), t('Affido-1')),
+    h('p', { class: 'nota' }, U.notaMatriz),
     h('div', { class: 'matriz-envoltura' }, h('table', { class: 'matriz' },
-      h('thead', null, h('tr', null, h('th', { scope: 'col' }, 'Tarea'), ORGANOS.map((o) => h('th', { scope: 'col' }, linea(t(o)).replace(' Director', ' / Director'))))),
+      h('thead', null, h('tr', null, h('th', { scope: 'col' }, U.tarea), ORGANOS.map((o) => h('th', { scope: 'col' }, linea(t(o)))))),
       h('tbody', null, filas))),
     h('div', { class: 'botonera' }, confirmar, contador)));
 };
 
 ESCENAS.lider = () => {
   Sonido.ambiente('amb_oficina');
-  const conLider = (ef, valor, k) => ({ texto: t(k), elegir: () => { sumar(ef); S.leader = valor; anotar('El líder', t(k)); ir('liderComo'); } });
+  const conLider = (ef, valor, k) => ({ texto: t(k), elegir: () => { sumar(ef); S.leader = valor; anotar(U.temas.lider, t(k)); ir('liderComo'); } });
   decision({
-    etiqueta: 'Preparación · La tripulación', pregunta: t('Dec2-1'), img: 'lider_reunion',
+    etiqueta: prep('tripulacion'), pregunta: t('Dec2-1'), img: 'lider_reunion',
     opciones: [
       conLider({ effi: 3 }, 'si', 'Dec2-3'),
       conLider({ effi: 2, crea: 2 }, 'si', 'Dec2-4'),
       { texto: linea(t('Dec2-2')), elegir: () => {
         S.idea += 3;
         S.leader = 'no';
-        anotar('El líder', linea(t('Dec2-2')));
+        anotar(U.temas.lider, linea(t('Dec2-2')));
         Sonido.ui('aviso');
         S.elia = 1; // Dec 6
         S.scelta += 1;
-        aviso('La tripulación navegará sin líder');
+        aviso(U.sinLider);
         ir('eleccion');
       } },
     ],
@@ -794,11 +834,11 @@ const COMO = [
 ];
 ESCENAS.liderComo = () => {
   decision({
-    etiqueta: S.leader === 'nosi' ? 'Travesía · Confusión a bordo' : 'Preparación · La tripulación',
+    etiqueta: S.leader === 'nosi' ? etapa(3, U.eventos.confusion) : prep('tripulacion'),
     pregunta: t('Dec3-1'), img: 'lider_circulo', columnas: true,
     opciones: COMO.map(([k, ef]) => ({ texto: capital(t(k)), elegir: () => {
       sumar(ef);
-      anotar('El líder debería ser como', t(k));
+      anotar(U.temas.liderComo, t(k));
       if (S.leader === 'nosi') return eventoRuta(true); // Dec 5, caso "nosi"
       S.elia = 1;
       S.scelta += 1;
@@ -812,9 +852,9 @@ ESCENAS.reintentar = () => {
   Sonido.ui('error');
   const barcoGrande = S.barca > S.rotta;
   relato({
-    etiqueta: 'Botadura', titulo: 'El barco y la ruta no encajan',
+    etiqueta: etapa(2), titulo: U.noEncajan,
     texto: barcoGrande ? t('Scelta3-1') : t('Scelta3-3'),
-    nota: `Barco: ${linea(t(BARCOS[S.barca].titulo))} · Ruta: ${t(RUTAS[S.rotta].titulo)}`,
+    nota: `${U.temas.barco}: ${linea(t(BARCOS[S.barca].titulo))} · ${U.temas.ruta}: ${t(RUTAS[S.rotta].titulo)}`,
     img: BARCOS[S.barca].img,
     botones: [{ texto: t('Scelta3-2'), accion: () => {
       Object.assign(S, { rotta: 0, barca: 0, scelta: 2 }); // Scelta3-2
@@ -828,8 +868,8 @@ ESCENAS.botadura = () => {
   Sonido.ambiente('amb_puerto');
   const [felicidades, ...resto] = t('Scelta2-1').split('\n');
   const v = ventana('botadura');
-  const campo = h('input', { id: 'nombre-barco', type: 'text', maxlength: '40', autocomplete: 'off', placeholder: 'Nombre del barco', value: S.nombre });
-  const botar = h('button', { class: 'boton', type: 'button', disabled: !S.nombre || null }, '¡Botar el barco!', flecha());
+  const campo = h('input', { id: 'nombre-barco', type: 'text', maxlength: '40', autocomplete: 'off', placeholder: U.nombreBarco, value: S.nombre });
+  const botar = h('button', { class: 'boton', type: 'button', disabled: !S.nombre || null }, U.botar, flecha());
   campo.addEventListener('input', () => { botar.disabled = !campo.value.trim(); });
   campo.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !botar.disabled) botar.click(); });
   botar.addEventListener('click', () => {
@@ -844,14 +884,14 @@ ESCENAS.botadura = () => {
       const [p1, p2] = S.lScelta;
       if (p1 === 'Equipaggio') S.idea += 4; else if (p1 === 'Rotta') S.effi += 4; else if (p1 === 'Barca') S.carico += 1;
       if (p2 === 'Equipaggio') S.idea += 2; else if (p2 === 'Rotta') S.effi += 2;
-      anotar('Nombre del barco', S.nombre);
+      anotar(U.temas.nombre, S.nombre);
       ir('evento', S.idea >= S.effi ? 'confusion' : 'ingresos'); // Scelta 6
     }, 1700);
   });
   montar(lienzo(v, h('div', { class: 'panel' },
-    cabecera('Botadura', felicidades),
+    cabecera(etapa(2), felicidades),
     h('div', { class: 'contexto' }, parrafos(resto.join(' '))),
-    h('div', { class: 'campo' }, h('label', { for: 'nombre-barco' }, 'Nombre del barco'), campo),
+    h('div', { class: 'campo' }, h('label', { for: 'nombre-barco' }, U.nombreBarco), campo),
     h('div', { class: 'botonera' }, botar))));
   luego(() => campo.focus(), 400);
 };
@@ -868,7 +908,7 @@ const alFinal = () => ir('velas');
 
 const EVENTOS = {
   confusion: {
-    titulo: 'Confusión a bordo', img: 'ev_confus', amb: 'amb_multitud', intro: 'Confus1-1',
+    img: 'ev_confus', amb: 'amb_multitud', intro: 'Confus1-1',
     opciones: () => (S.leader === 'si'
       ? [['Confus2-1', { idea: 1 }], ['Confus2-2', { idea: 3, carico: 3 }], ['Confus2-3', { effi: 3 }]]
       : [['Confus2-4', { effi: 3, idea: -3 }], ['Confus2-5', { effi: 2, idea: 2 }],
@@ -876,42 +916,42 @@ const EVENTOS = {
     despues: () => eventoRuta(true),
   },
   ingresos: {
-    titulo: 'Las ganancias no llegan', img: 'grafico', amb: 'amb_oficina', intro: 'Inso1-1',
+    img: 'grafico', amb: 'amb_oficina', intro: 'Inso1-1',
     opciones: () => [['Inso2-1', { effi: 2 }], ['Inso2-2', { effi: 3, carico: 3 }], ['Inso2-3', { carico: 3, crea: 3 }], ['Inso2-4', { idea: 2, carico: 1 }]],
     despues: () => eventoRuta(true),
   },
   crisis: {
-    titulo: 'Momento de crisis', img: 'ev_crisi', amb: 'amb_tension', intro: 'Crisi1-1',
+    img: 'ev_crisi', amb: 'amb_tension', intro: 'Crisi1-1',
     opciones: () => [['Crisi2-1', { effi: 3, idea: 3 }], ['Crisi2-2', { effi: 3, carico: 3 }]],
     despues: () => eventoRuta(false),
   },
   saturacion: {
-    titulo: 'Una ruta muy transitada', img: 'ev_affoll', amb: 'amb_puerto', ef: 'ef_bocina', intro: 'Affoll1-1',
+    img: 'ev_affoll', amb: 'amb_puerto', ef: 'ef_bocina', intro: 'Affoll1-1',
     opciones: () => [['Affoll2-1', { effi: 1 }], ['Affoll2-2', { effi: 3 }], ['Affoll2-3', { effi: 2 }], ['Affoll2-4', { effi: 2, idea: 2 }], ['Affoll2-5', { crea: -2, errore: 1 }]],
     despues: () => (S.random === 2 ? alFinal() : ir('evento', 'tormenta')),
   },
   tormenta: {
-    titulo: 'La tempestad', img: 'ev_tempor', amb: 'amb_tormenta', ef: 'ef_trueno', intro: 'tempor1-1',
+    img: 'ev_tempor', amb: 'amb_tormenta', ef: 'ef_trueno', intro: 'tempor1-1',
     opciones: () => [['tempor2-1', { effi: 1 }], ['tempor2-2', { crea: -2, effi: -2 }], ['tempor2-3', { effi: 2 }]],
     despues: () => (S.random === 1 ? alFinal() : ir('evento', 'saturacion')),
   },
   piratas: {
-    titulo: 'Una propuesta tentadora', img: 'ev_pirati', amb: 'amb_olas', ef: 'ef_gaviotas', intro: 'Pirati1-1',
+    img: 'ev_pirati', amb: 'amb_olas', ef: 'ef_gaviotas', intro: 'Pirati1-1',
     opciones: () => [['Pirati2-1', { effi: 2 }], ['Pirati2-2', { idea: 1 }], ['Pirati2-3', { effi: 2, crea: 2, idea: -1 }]],
     despues: () => (S.random === 2 ? alFinal() : ir('evento', 'naufragos')),
   },
   naufragos: {
-    titulo: 'Náufragos a la vista', img: 'ev_naufra', amb: 'amb_olas', intro: 'Naufra1-1',
+    img: 'ev_naufra', amb: 'amb_olas', intro: 'Naufra1-1',
     opciones: () => [['Naufra2-1', { carico: 2, effi: -1, idea: 3 }], ['Naufra2-2', { effi: 2, idea: 1 }], ['Naufra2-3', { effi: 3 }]],
     despues: () => (S.random === 2 ? ir('evento', 'piratas') : alFinal()),
   },
   competencia: {
-    titulo: 'Un competidor gigante', img: 'ev_conc3', amb: 'amb_puerto', ef: 'ef_bocina', intro: 'Conc31-1',
+    img: 'ev_conc3', amb: 'amb_puerto', ef: 'ef_bocina', intro: 'Conc31-1',
     opciones: () => [['Conc32-1', { effi: 3, idea: -2 }], ['Conc32-2', { effi: 3, idea: -3 }], ['Conc32-3', { carico: 3 }]],
     despues: () => (S.random === 2 ? alFinal() : ir('evento', 'isla')),
   },
   isla: {
-    titulo: 'La isla', img: 'ev_isola', amb: 'amb_tambores', intro: 'Isola1-1',
+    img: 'ev_isola', amb: 'amb_tambores', intro: 'Isola1-1',
     // Nota: en el original la 3.ª opción aplicaba por error la puntuación de la 1.ª; aquí usa la suya (IsolaCal 3).
     opciones: () => [['Isola2-1', { effi: 2, idea: -1 }], ['Isola2-2', { idea: -2, effi: 3 }], ['Isola2-3', { idea: 2 }]],
     despues: () => (S.random === 2 ? ir('evento', 'competencia') : alFinal()),
@@ -921,15 +961,14 @@ const EVENTOS = {
 ESCENAS.evento = (id) => {
   const e = EVENTOS[id];
   Sonido.detener(); // corta el efecto del evento anterior (p. ej. el trueno)
-  Sonido.detener(); // corta el efecto del evento anterior (p. ej. el trueno)
   Sonido.ambiente(e.amb);
   if (e.ef) Sonido.efecto(e.ef); else Sonido.ui('aviso');
   decision({
-    etiqueta: 'Travesía', pregunta: e.titulo, contexto: linea(t(e.intro)), nota: '¿Qué decidimos?',
+    etiqueta: etapa(3), pregunta: U.eventos[id], contexto: linea(t(e.intro)), nota: U.queDecidimos,
     img: e.img, vent: e.vent,
     opciones: e.opciones().map(([k, ef, propio]) => ({
       texto: linea(t(k)),
-      elegir: () => { sumar(ef); anotar(e.titulo, linea(t(k))); (propio || e.despues)(); },
+      elegir: () => { sumar(ef); anotar(U.eventos[id], linea(t(k))); (propio || e.despues)(); },
     })),
   });
 };
@@ -954,7 +993,7 @@ function velero(v) {
   const hP = alto(v.pE), hC = alto(v.pI), hF = alto(S.crea * 100 / 20);
   const base = 288;
   const vela = (d, color, visible, retraso) => s('path', { d, fill: color, class: 'vela' + (visible ? '' : ' oculta'), style: `animation-delay:${retraso}s`, stroke: 'rgba(255,255,255,.35)', 'stroke-width': '1.5' });
-  return s('svg', { class: 'velero', viewBox: '0 0 520 400', role: 'img', 'aria-label': 'Barco con las velas ganadas' },
+  return s('svg', { class: 'velero', viewBox: '0 0 520 400', role: 'img', 'aria-label': U.ariaVelero },
     s('defs', null, s('linearGradient', { id: 'casco', x1: '0', x2: '0', y1: '0', y2: '1' }, s('stop', { offset: '0', 'stop-color': '#ffffff' }), s('stop', { offset: '1', 'stop-color': '#c9d6e3' }))),
     s('path', { d: 'M20 372 C 140 352 380 392 500 368', stroke: 'rgba(248,188,8,.35)', 'stroke-width': '3', fill: 'none' }),
     s('line', { x1: 210, y1: 300, x2: 210, y2: 40, stroke: '#8a5a2b', 'stroke-width': 6, 'stroke-linecap': 'round' }),
@@ -971,7 +1010,7 @@ function velero(v) {
 function indicador(nombre, color, valor, texto, visible) {
   return h('div', { class: 'indicador' },
     h('span', { class: 'color', style: `background:${color}` }),
-    h('span', null, nombre, !visible && h('span', { class: 'nota' }, ' — sin velas')),
+    h('span', null, nombre, !visible && h('span', { class: 'nota' }, ` — ${U.sinVelas}`)),
     h('span', { class: 'valor' }, texto),
     h('div', { class: 'barra-ind' }, h('span', { style: `width:${clamp(valor, 2, 100)}%;background:${color}` })));
 }
@@ -981,21 +1020,21 @@ ESCENAS.velas = () => {
   Sonido.efecto('ef_campana');
   luego(() => Sonido.ui('exito'), 600);
   const v = calcularViaje();
-  anotar('Velas ganadas', `Pragmatismo ${v.pE} % · Coherencia ${v.pI} % · Creatividad ${S.crea} puntos`);
+  anotar(U.temas.velas, `${U.pragmatismo} ${v.pE} % · ${U.coherencia} ${v.pI} % · ${U.creatividad} ${S.crea} ${U.puntos}`);
   teclas = { Enter: () => ir('despedida') };
   montar(h('div', { class: 'resultado' },
     velero(v),
     h('div', { class: 'panel' },
-      cabecera('Llegada', 'Las velas ganadas'),
+      cabecera(etapa(4), U.velasGanadas),
       h('p', { class: 'contexto' }, t('Ultima2-4')),
       h('div', { class: 'leyenda' },
         indicador(t('Ultima2-1'), COLOR.naranja, v.pE, `${v.pE} %`, v.verPragmatismo),
         indicador(t('Ultima2-2'), COLOR.dorado, v.pI, `${v.pI} %`, v.verCoherencia),
-        indicador(t('Ultima2-3'), COLOR.crema, S.crea * 5, `${S.crea} pts`, v.verCreatividad)),
-      h('p', { class: 'millas' }, 'Han permitido recorrer ', h('b', null, v.recorrido.toLocaleString('es')), ' millas, es decir, el ', h('b', null, `${v.viaje} %`), ' de tu objetivo.'),
+        indicador(t('Ultima2-3'), COLOR.crema, S.crea * 5, `${S.crea} ${U.pts}`, v.verCreatividad)),
+      h('p', { class: 'millas' }, conDestacados(U.millas(v.recorrido.toLocaleString(loc()), `${v.viaje} %`))),
       h('div', { class: 'botonera' },
-        h('button', { class: 'boton', type: 'button', onclick: () => { Sonido.click(); ir('despedida'); } }, 'Continuar', flecha()),
-        h('button', { class: 'boton secundario imprimir', type: 'button', onclick: imprimirDiario }, BARRA.imprimir)))));
+        h('button', { class: 'boton', type: 'button', onclick: () => { Sonido.click(); ir('despedida'); } }, U.continuar, flecha()),
+        h('button', { class: 'boton secundario imprimir', type: 'button', onclick: imprimirDiario }, U.imprimir)))));
 };
 
 ESCENAS.despedida = () => {
@@ -1004,15 +1043,15 @@ ESCENAS.despedida = () => {
   const otraVez = () => { Sonido.click(); S = nuevoEstado(); borrarPartida(); ir('prima'); };
   teclas = { Enter: otraVez };
   montar(lienzoSolo(
-    h('p', { class: 'etiqueta' }, 'Fin del viaje'),
-    h('h1', { class: 'pregunta' }, '¡' + capital(linea(t('Indir2-1'))) + '!'),
+    h('p', { class: 'etiqueta' }, U.finViaje),
+    h('h1', { class: 'pregunta' }, linea(t('Indir2-1'))),
     h('div', { class: 'contexto' }, parrafos(MARCA.contacto.length ? t('Indir1-1') : t('Indir1-1').split(';')[0] + '.')),
     MARCA.contacto.length > 0 && h('div', { class: 'pizarra' }, h('p', null, h('strong', null, capital(t('Indir2-2')))), MARCA.contacto.map((c) => h('div', null, c))),
     h('div', { class: 'botonera' },
-      h('button', { class: 'boton', type: 'button', onclick: otraVez }, 'Jugar otra vez', flecha()),
-      h('button', { class: 'boton secundario imprimir', type: 'button', onclick: imprimirDiario }, BARRA.imprimir),
-      h('button', { class: 'boton secundario', type: 'button', onclick: () => { Sonido.click(); ir('portada'); } }, 'Volver al inicio'),
-      h('button', { class: 'boton secundario', type: 'button', onclick: abrirCreditos }, 'Créditos'))));
+      h('button', { class: 'boton', type: 'button', onclick: otraVez }, U.jugarOtraVez, flecha()),
+      h('button', { class: 'boton secundario imprimir', type: 'button', onclick: imprimirDiario }, U.imprimir),
+      h('button', { class: 'boton secundario', type: 'button', onclick: () => { Sonido.click(); ir('portada'); } }, U.volverInicio),
+      h('button', { class: 'boton secundario', type: 'button', onclick: abrirCreditos }, U.creditos))));
 };
 
 // ============================================================ Ventanas: situación, salir, diario
@@ -1028,7 +1067,7 @@ $('#modal').addEventListener('click', (e) => { if (e.target.id === 'modal') cerr
 
 function tiempoJugado() {
   const min = Math.floor(S.tiempo / 60), seg = S.tiempo % 60;
-  return `Has navegado durante ${min} ${min === 1 ? 'minuto' : 'minutos'} y ${seg} ${seg === 1 ? 'segundo' : 'segundos'}`;
+  return U.duracion(min, seg);
 }
 
 // Punto: equilibrio entre pragmatismo y coherencia, carga, recorrido y tiempo
@@ -1039,48 +1078,48 @@ function abrirSituacion() {
   const scarto = mayor > 0 ? 100 - Math.trunc(menor * 100 / mayor) : 0;
   const nivel = scarto > 48 ? 5 : scarto > 36 ? 4 : scarto > 24 ? 3 : scarto > 12 ? 2 : 1;
   const giro = (v.pE === v.pI ? 0 : v.pE > v.pI ? -1 : 1) * (nivel - 1) * 5;
-  const estado = ['Muy equilibrado', 'Bastante equilibrado', 'Algo desequilibrado', 'Desequilibrado', 'Muy desequilibrado'][nivel - 1];
+  const estado = U.estados[nivel - 1];
   const balanza = s('svg', { class: 'balanza', viewBox: '0 0 320 110', role: 'img', 'aria-label': estado },
     s('path', { d: 'M160 44 L140 100 H180 Z', fill: '#21466b' }),
     s('g', { class: 'brazo', style: `transform: rotate(${giro}deg)` },
       s('rect', { x: 30, y: 38, width: 260, height: 6, rx: 3, fill: '#a3b8cc' }),
       s('circle', { cx: 40, cy: 54, r: 14, fill: COLOR.naranja }), s('circle', { cx: 280, cy: 54, r: 14, fill: COLOR.dorado })),
-    s('text', { x: 40, y: 18, 'text-anchor': 'middle', fill: COLOR.naranja, 'font-size': 12 }, 'Pragmatismo'),
-    s('text', { x: 280, y: 18, 'text-anchor': 'middle', fill: COLOR.dorado, 'font-size': 12 }, 'Coherencia'));
+    s('text', { x: 40, y: 18, 'text-anchor': 'middle', fill: COLOR.naranja, 'font-size': 12 }, U.pragmatismo),
+    s('text', { x: 280, y: 18, 'text-anchor': 'middle', fill: COLOR.dorado, 'font-size': 12 }, U.coherencia));
   const recorrido = clamp(v.viaje, 0, 100);
   const dato = (nombre, valor, pct) => h('div', { class: 'dato' },
     h('div', { class: 'fila' }, h('span', null, nombre), h('span', null, valor)),
     pct != null && h('div', { class: 'medidor' }, h('div', { class: 'barra-carga' }, h('span', { style: `width:${pct}%` }))));
   abrirModal([
-    h('h2', null, BARRA.situacion),
+    h('h2', null, U.situacion),
     h('div', { class: 'situacion' },
-      h('div', { class: 'dato' }, h('div', { class: 'fila' }, h('span', null, BARRA.equilibrio), h('span', null, estado)), balanza),
-      dato(BARRA.carga, String(S.carico), clamp(S.carico * 10, 0, 100)),
-      dato(BARRA.recorrido, `${recorrido} %`, recorrido),
-      h('p', { class: 'nota' }, tiempoJugado() + '.')),
-    h('div', { class: 'botonera' }, h('button', { class: 'boton', type: 'button', onclick: cerrarModal }, 'Seguir navegando')),
+      h('div', { class: 'dato' }, h('div', { class: 'fila' }, h('span', null, U.equilibrio), h('span', null, estado)), balanza),
+      dato(U.carga, String(S.carico), clamp(S.carico * 10, 0, 100)),
+      dato(U.recorrido, `${recorrido} %`, recorrido),
+      h('p', { class: 'nota' }, U.hasNavegado(tiempoJugado()))),
+    h('div', { class: 'botonera' }, h('button', { class: 'boton', type: 'button', onclick: cerrarModal }, U.seguirNavegando)),
   ]);
 }
 
 function abrirCreditos() {
   Sonido.click();
-  const autores = [...new Set(CREDITOS_FOTOS.map((c) => c.autor))].sort((a, b) => a.localeCompare(b, 'es'));
+  const autores = [...new Set(CREDITOS_FOTOS.map((c) => c.autor))].sort((a, b) => a.localeCompare(b, loc()));
   abrirModal([
-    h('h2', null, 'Créditos'),
+    h('h2', null, U.creditos),
     h('div', { class: 'creditos-lista' },
       h('p', null, h('strong', null, `${MARCA.producto} · ${MARCA.nombre}`)),
       h('div', { class: 'autor' },
-        h('span', { class: 'nota' }, 'Remasterización y desarrollo'),
+        h('span', { class: 'nota' }, U.remasterizacion),
         h('strong', null, AUTOR.nombre),
-        h('span', { class: 'nota' }, AUTOR.cargo),
-        h('a', { class: 'boton secundario', href: AUTOR.web, target: '_blank', rel: 'noopener' }, 'Visita su página: ' + AUTOR.web.replace('https://', ''))),
-      h('p', { class: 'nota' }, 'Basado en el juego TeamWork (1998), de Claps Soc. Coop. (Pordenone, Italia).'),
-      h('p', null, h('strong', null, 'Fotografías de Unsplash')),
+        h('span', { class: 'nota' }, U.cargoAutor),
+        h('a', { class: 'boton secundario', href: AUTOR.web, target: '_blank', rel: 'noopener' }, `${U.visitaPagina}: ${AUTOR.web.replace('https://', '')}`)),
+      h('p', { class: 'nota' }, U.basadoEn),
+      h('p', null, h('strong', null, U.fotosUnsplash)),
       h('p', { class: 'nota' }, autores.join(' · ')),
-      h('p', null, h('strong', null, 'Sonidos de Freesound (dominio público, CC0)')),
-      h('p', { class: 'nota' }, [...new Set(CREDITOS_SONIDOS.map((c) => c.autor))].sort((a, b) => a.localeCompare(b, 'es')).join(' · ')),
-      h('p', { class: 'nota' }, 'Fuente Outfit (SIL Open Font License).')),
-    h('div', { class: 'botonera' }, h('button', { class: 'boton', type: 'button', onclick: cerrarModal }, 'Cerrar')),
+      h('p', null, h('strong', null, U.sonidosFreesound)),
+      h('p', { class: 'nota' }, [...new Set(CREDITOS_SONIDOS.map((c) => c.autor))].sort((a, b) => a.localeCompare(b, loc())).join(' · ')),
+      h('p', { class: 'nota' }, U.fuenteOutfit)),
+    h('div', { class: 'botonera' }, h('button', { class: 'boton', type: 'button', onclick: cerrarModal }, U.cerrar)),
   ]);
 }
 
@@ -1088,7 +1127,7 @@ function abrirSalir() {
   Sonido.click();
   abrirModal([
     h('h2', null, t('Quit-1')),
-    h('p', { class: 'nota' }, 'Tu viaje queda guardado: podrás continuarlo la próxima vez desde la pantalla de inicio.'),
+    h('p', { class: 'nota' }, U.notaSalir),
     h('div', { class: 'botonera' },
       h('button', { class: 'boton', type: 'button', onclick: cerrarModal }, t('Quit-3')),
       h('button', { class: 'boton secundario', type: 'button', onclick: salirApp }, t('Quit-2'))),
@@ -1101,7 +1140,7 @@ function salirApp() {
   setTimeout(() => {
     if (NATIVO) { window.Capacitor.Plugins.App.exitApp(); return; } // app de Android
     window.close();
-    setTimeout(() => { cerrarModal(); aviso('Ya puedes cerrar esta ventana.'); }, 300);
+    setTimeout(() => { cerrarModal(); aviso(U.puedesCerrar); }, 300);
   }, 500);
 }
 
@@ -1111,21 +1150,21 @@ function imprimirDiario() {
   const v = calcularViaje();
   const fila = (a, b) => h('tr', null, h('th', null, a), h('td', null, b));
   $('#diario').replaceChildren(
-    h('h1', null, 'Diario de a bordo'),
-    h('p', { class: 'sub' }, `${MARCA.producto} · ${MARCA.nombre} · ${new Date().toLocaleDateString('es')}`),
+    h('h1', null, U.diario),
+    h('p', { class: 'sub' }, `${MARCA.producto} · ${MARCA.nombre} · ${new Date().toLocaleDateString(loc())}`),
     h('table', null,
-      fila('Nombre del barco', S.nombre || '—'),
-      fila('Tipo de barco', S.barca ? linea(t(BARCOS[S.barca].titulo)) : '—'),
-      fila('Ruta elegida', S.rotta ? t(RUTAS[S.rotta].titulo) : '—'),
-      fila('Tiempo de juego', tiempoJugado().replace('Has navegado durante ', ''))),
-    h('h2', null, 'Decisiones del viaje'),
+      fila(U.nombreBarco, S.nombre || '—'),
+      fila(U.tipoBarco, S.barca ? linea(t(BARCOS[S.barca].titulo)) : '—'),
+      fila(U.rutaElegida, S.rotta ? t(RUTAS[S.rotta].titulo) : '—'),
+      fila(U.tiempoJuego, tiempoJugado())),
+    h('h2', null, U.decisionesViaje),
     h('table', null, S.respuestas.map((r) => fila(r.tema, r.eleccion))),
-    h('h2', null, 'Resultado'),
+    h('h2', null, U.resultado),
     h('table', null,
       fila(t('Ultima2-1'), `${v.pE} %`),
       fila(t('Ultima2-2'), `${v.pI} %`),
-      fila(t('Ultima2-3'), `${S.crea} puntos`),
-      fila('Millas recorridas', `${v.recorrido.toLocaleString('es')} (${v.viaje} % del objetivo)`)));
+      fila(t('Ultima2-3'), `${S.crea} ${U.puntos}`),
+      fila(U.millasRecorridas, U.millasDetalle(v.recorrido.toLocaleString(loc()), v.viaje))));
   window.print();
 }
 
@@ -1136,10 +1175,11 @@ document.body.classList.toggle('nativo', NATIVO);
 $('#btn-sonido').addEventListener('click', () => Sonido.alternar());
 $('#btn-situacion').addEventListener('click', abrirSituacion);
 $('#btn-salir').addEventListener('click', abrirSalir);
+$('#btn-idioma').addEventListener('click', abrirIdiomas);
 $('#btn-pantalla').addEventListener('click', () => {
   if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {});
 });
-pintarBotonSonido();
+fijarIdioma(idiomaInicial());
 
 document.addEventListener('keydown', (e) => {
   if (!$('#modal').hidden) { if (e.key === 'Escape') cerrarModal(); return; }
